@@ -251,6 +251,7 @@ h1.pg{font-size:22px;margin:4px 0 14px;font-weight:600}
 }
 </style>
 <!-- <script type="module" src="../firebase-integration.js"></script> -->
+<!-- Firebase 暂时禁用：gstatic.com 在国内访问慢/被墙，导致页面卡住。localStorage 本地存储正常工作。 -->
 </head>
 <body>
 <div id="app"></div>
@@ -265,94 +266,132 @@ h1.pg{font-size:22px;margin:4px 0 14px;font-weight:600}
    ============================================================ */
 
 /* ---------- 表单 schema：界面与导出共用同一份，避免文案漂移 ---------- */
+/* 文案版本标记 blue_form_research_2026_11_23 */
 const CFG = {
   week: '第三周',
   title: '第三周小组平台开发工作台',
-  practice: { needs:'P3 识别与界定计算问题', resources:'P4 开发与使用抽象', functions:'P5 创建计算作品', checks:'P6 测试与改进计算作品' },
+  promptVersion: 'blue_form_research_2026_11_23',
+  practice: { users:'P3 识别与界定计算问题', resources:'P4 开发与使用抽象', functions:'P5 创建计算作品', checks:'P6 测试与改进计算作品' },
   sections: [
-    { id:'needs', label:'明确需求', questions:[
-      { id:'Q01', label:'平台面向哪些使用者及具体任务？需求判断基于什么材料，哪些环节适合由平台处理？', fields:[
-        { key:'audience',   label:'目标使用者与使用情境', control:'text', ph:'说明学段、已有经验和实际使用场景，区分教师备课与学生学习。' },
-        { key:'user_task',  label:'平台支持的主要任务', control:'textarea', ph:'用可观察的操作或产出描述任务，说明所需信息处理。' },
-        { key:'difficulty', label:'现有困难与支持需求', control:'textarea', ph:'区分实际观察到的问题和小组尚待验证的判断。' },
-        { key:'demand_basis', label:'需求判断依据', control:'textarea', optional:true,
-          disclosure:'补充需求判断依据', ph:'关联课标、教材、用户反馈或任务分析；未经调查的需求注明为待验证假设。' } ] },
-      { id:'Q02', label:'如何将主要任务分解为可实施的子任务，并确定本轮开发范围与整合方式？', fields:[
-        { key:'scope',   label:'本轮开发范围与优先顺序', control:'textarea', ph:'说明关键子任务、先后依赖，以及时间、资源和工具约束。' },
-        { key:'assignments', label:'任务分工', control:'rows', addLabel:'添加一行分工',
-          cols:[ { k:'member', l:'成员', control:'member_select', width:'180px' },
-                 { k:'task',   l:'负责内容', control:'text' } ] },
-        { key:'deferred_scope', label:'暂缓任务及理由', control:'textarea', optional:true, ph:'按需填写。' },
-        { key:'integration', label:'模块整合与检查安排', control:'textarea', optional:true,
-          disclosure:'补充分工：怎样汇总和整合', ph:'说明共同格式、模块接口、整合负责人及交叉检查方法。' } ] } ] },
+    { id:'users', label:'使用者与任务', devCheck:'另一个组员阅读后，能否说清平台要帮谁完成什么任务？若只能说"做一个丰富、美观的平台"，返回细化。', questions:[
+      { id:'Q01', label:'使用者与学习任务', fields:[
+        { key:'audience',   label:'谁在什么情境下使用平台', control:'textarea', ph:'说明使用者的年级与相关基础。' },
+        { key:'user_task',  label:'要完成什么具体学习任务', control:'textarea', ph:'需要查找、比较、选择、操作或保存什么。' },
+        { key:'difficulty', label:'现有做法有什么困难', control:'textarea', ph:'区分实际观察和教学预判。' },
+        { key:'demand_basis', label:'判断依据是什么', control:'textarea', ph:'关联教材、课标、观察或用户反馈。' },
+        { key:'human_platform_boundary', label:'哪些交给平台处理，哪些仍由使用者判断', control:'textarea',
+          ph:'检索、匹配或计算可由平台支持，内容是否合适可能需要使用者自己判断。' } ] },
+      { id:'Q02', label:'开发范围与分工', fields:[
+        { key:'scope',        label:'本周先完成哪些任务', control:'textarea', ph:'全册范围及优先实现内容。' },
+        { key:'task_dependencies', label:'任务之间有什么先后或依赖', control:'textarea', ph:'说明哪些任务必须在其他任务之前完成，以及原因。' },
+        { key:'assignments', label:'成员分工', control:'rows', addLabel:'添加一行分工',
+          cols:[ { k:'member', l:'成员', control:'member_select', width:'160px' },
+                 { k:'task',   l:'负责内容', control:'text' },
+                 { k:'deliverable', l:'交付内容', control:'text', optional:true } ] },
+        { key:'integration', label:'怎样统一格式，整合模块并交叉检查', control:'textarea',
+          ph:'说明共同资源格式、公共组件、整合负责人及交叉检查方法。' },
+        { key:'deferred_scope', label:'暂时不做什么', control:'textarea', optional:true,
+          disclosure:'补充安排', ph:'说明后续内容与原因。' } ] } ] },
 
-    { id:'resources', label:'组织资源', questions:[
-      { id:'Q03', label:'全册资源如何分类、关联和检索？哪些共同结构可以复用，哪些差异需要保留？',
-        fields:[
-        { key:'modules',   label:'资源模块与关联关系', control:'textarea', ph:'可用目录、概念关系图或结构图说明，不只列页面名称。' },
-        { key:'find_way',  label:'分类检索与访问路径', control:'textarea', ph:'说明使用者怎样依据章节、概念、目标或用途定位资源。' },
-        { key:'why_org',   label:'组织方式的选择依据', control:'textarea', ph:'联系使用任务说明所选方式的作用及可能局限。' },
-        { key:'reuse',     label:'共同结构与必要差异', control:'textarea', ph:'比较至少两类资源或模块，说明可共用的信息、规则或组件，以及不可统一的部分。' } ] },
-      { id:'Q04', label:'资源需要保留哪些共同信息，以支持分类、调用和更新？如何检查信息质量？',
-        fields:[
-        { key:'resource_fields', label:'资源字段及其用途', control:'rows', addLabel:'添加一个记录项',
-          cols:[ { k:'name', l:'记录什么', control:'text' }, { k:'reason', l:'为什么需要', control:'text' } ] },
-        { key:'resource_quality', label:'资源质量检查依据', control:'textarea', optional:true,
-          disclosure:'补充资源质量检查说明', ph:'说明科学内容、教材目标匹配、来源与使用条件、链接有效性如何检查；引用已有标准即可。' } ] } ] },
+    { id:'resources', label:'资源结构', devCheck:'选取两条不同类型的真实资源，能否用该结构记录并找到？不能时先调整格式，再批量录入。', questions:[
+      { id:'Q03', label:'全册资源怎样组织', fields:[
+        { key:'modules',   label:'全册目录或结构图', control:'textarea', ph:'可用文字、表格或结构图说明。' },
+        { key:'find_way',  label:'使用者怎样找到所需资源', control:'textarea', ph:'说明使用者怎样依据章节、概念、目标或用途定位资源。' },
+        { key:'why_org',   label:'为什么这样组织', control:'textarea', ph:'联系使用任务说明所选方式的作用及可能局限。' },
+        { key:'comparison_objects', label:'选择比较的两个章节或两类资源', control:'text', ph:'例如：函数图像与三角函数、力学与电磁学资源。' },
+        { key:'reuse',     label:'哪些结构可以共用，哪些差异需要保留，为什么', control:'textarea', ph:'比较至少两类资源或模块，说明可共用的信息、规则或组件，以及不可统一的部分。' } ] },
+      { id:'Q04', label:'每条资源记录什么', fields:[
+        { key:'resource_fields', label:'共同信息及用途', control:'rows', addLabel:'添加一个记录项',
+          cols:[ { k:'name', l:'记录什么', control:'text' },
+                 { k:'reason', l:'用来做什么', control:'text' },
+                 { k:'example', l:'示例值', control:'text', optional:true } ] },
+        { key:'type_specific_fields', label:'不同类型资源需要补充哪些信息', control:'textarea', ph:'说明不同格式或类型的资源各自需要额外记录什么。' },
+        { key:'resource_quality', label:'怎样检查内容、教学适用性、来源和链接', control:'textarea', ph:'说明内容准确性、教学适用性、来源和使用条件、链接有效性如何检查。' } ] } ] },
 
-    { id:'functions', label:'设计功能', questions:[
-      { id:'Q05', label:'每项功能如何将使用者输入转化为处理结果，并支持所界定的任务？', control:'cards', store:'functions', addLabel:'添加功能',
+    { id:'functions', label:'功能与开发', devCheck:'已登记的功能是否都写清了输入、规则和输出？进度为"已实现"的是否真的可以运行？', questions:[
+      { id:'Q05', label:'一项功能怎样工作', control:'cards', store:'functions', addLabel:'添加功能',
         prefix:'F', summary:['name','owner','status'],
         fields:[
         { key:'name',          label:'功能名称', control:'text' },
-        { key:'user_action',   label:'使用者操作与输入', control:'textarea', ph:'说明操作起点、输入内容或选择条件。' },
-        { key:'processing',    label:'信息处理规则', control:'textarea', ph:'说明匹配条件、判断分支、计算或存储规则；避免只写系统自动处理。' },
-        { key:'output',        label:'预期输出与完成状态', control:'textarea', ph:'说明应显示或保存什么，以及何种状态表示任务完成。' },
+        { key:'owner',         label:'负责人', control:'member_select' },
+        { key:'user_action',   label:'使用者输入或选择什么', control:'textarea', ph:'说明操作起点、输入内容或选择条件。' },
+        { key:'data_inputs',   label:'平台读取什么信息', control:'textarea', ph:'说明该功能运行时需要读取的数据、资源或用户输入。' },
+        { key:'processing',    label:'按什么条件或步骤处理', control:'textarea', ph:'说明匹配条件、判断分支、计算或存储规则。' },
+        { key:'output',        label:'输出什么结果', control:'textarea', ph:'说明应显示或保存什么，以及何种状态表示任务完成。' },
+        { key:'task_alignment', label:'支持哪项学习任务', control:'textarea', ph:'关联 Q01 中的学习任务，说明该功能为何必要。' },
         { key:'status',        label:'开发进度', control:'select', noDefault:true, options:[
-          { v:'planned', l:'还没做' }, { v:'doing', l:'正在做' }, { v:'made', l:'已做出' }, { v:'skip', l:'暂不做' } ] },
-        { key:'owner',         label:'开发负责人', control:'member_select' },
-        { key:'task_alignment', label:'对应任务及支持作用', control:'textarea', optional:true,
-          disclosure:'补充任务关联说明', ph:'关联需求或学习任务，说明该功能为何必要。' } ] },
-      { id:'Q06', label:'针对一项关键设计问题，小组比较了哪些方案，依据什么作出选择并检查生成结果？', fields:[
-        { key:'problem',  label:'关键设计问题', control:'textarea' },
-        { key:'decision', label:'采用方案与实施处理', control:'textarea' },
-        { key:'reason',   label:'方案选择与人工检查依据', control:'textarea', ph:'说明科学内容、处理逻辑或任务支持方面的判断，关联具体记录。' },
-        { key:'qoder_use', label:'Qoder建议的处理方式', control:'select', optional:true,
-          disclosure:'补充Qoder使用情况（只记典型决定，不必抄全部对话）', options:[
-          { v:'adopted',  l:'直接采用' }, { v:'modified', l:'修改后采用' },
-          { v:'dropped',  l:'放弃了这条建议' }, { v:'none', l:'本轮未涉及' } ] },
-        { key:'qoder_note', label:'相关建议与检查位置', control:'textarea', optional:true,
-          disclosure:'补充Qoder使用情况（只记典型决定，不必抄全部对话）' },
-        { key:'alternatives', label:'备选方案及取舍', control:'textarea', optional:true,
-          disclosure:'补充备选方案记录', ph:'仅记录实际考虑过的方案；没有比较记录时说明未记录，不事后补造。' } ] } ] },
-
-    { id:'checks', label:'检查改进', questions:[
-      { id:'Q07', label:'如何检查指定版本是否满足任务要求？实际结果与事先设定的判据有何差异？', control:'cards', store:'checks', addLabel:'添加检查',
-        prefix:'T', summary:['target','tested_version','result'],
+          { v:'planned', l:'尚未开始' }, { v:'doing', l:'开发中' }, { v:'made', l:'已实现' }, { v:'skip', l:'暂不开发' } ] } ] },
+      { id:'Q06', label:'关键选择与人工检查', control:'cards', store:'decisions', addLabel:'添加决定',
+        prefix:'QD', summary:['problem','event_at'],
         fields:[
-        { key:'target',        label:'测试对象', control:'function_select' },
-        { key:'tested_version',label:'所测平台版本', control:'version_select', mustConfirm:true },
-        { key:'how',           label:'测试任务、输入与操作条件', control:'textarea', ph:'按需覆盖常规操作、无结果、错误输入或其他关键边界情况；说明设备与额外帮助。' },
-        { key:'expected',      label:'预期结果与通过判据', control:'textarea', ph:'在测试前说明可观察结果，不以感觉好用作为唯一判据。' },
-        { key:'actual',        label:'实际结果与证据位置', control:'textarea', disabledWhen:{ field:'result', v:'not_tested' }, ph:'填写实际观察及相应材料；未测试则保留未测试状态。' },
-        { key:'result',        label:'测试结论', control:'select', noDefault:true, options:[
-          { v:'met', l:'符合预期' }, { v:'unmet', l:'不符合预期' }, { v:'not_tested', l:'尚未测试' } ] },
-        { key:'next_action',   label:'问题定位与处理安排', control:'textarea', optional:true, ph:'区分内容、数据、逻辑和交互问题，必要时记录复测计划。' } ] },
-      { id:'Q08', label:'本轮依据哪些证据作出了哪些修改？尚存限制准备如何验证？', fields:[
-        { key:'changed', label:'已完成的修订及依据', control:'textarea', ph:'写清问题、改前改后、相应版本和来源；未复测时不声称改进已有效。' },
-        { key:'next',    label:'尚存问题与后续验证', control:'textarea', ph:'区分功能缺口、待检验需求和已知限制，说明拟采用的检查任务。' },
-        { key:'links',   label:'关联的功能、测试与材料', control:'link_select', optional:true,
-          disclosure:'关联具体功能、测试记录或材料' } ] } ] }
+        { key:'problem',      label:'遇到什么问题', control:'textarea' },
+        { key:'alternatives', label:'考虑过哪些做法', control:'textarea', ph:'仅记录实际考虑过的方案。' },
+        { key:'decision',     label:'最后采用什么做法', control:'textarea' },
+        { key:'reason',       label:'依据哪项材料、试用或讨论', control:'textarea', ph:'说明科学内容、处理逻辑或任务支持方面的判断。' },
+        { key:'qoder_use',    label:'是否参考 AI 建议', control:'select', noDefault:true, options:[
+          { v:'none',     l:'未涉及' }, { v:'adopted',  l:'采用' },
+          { v:'modified', l:'修改后采用' }, { v:'dropped',  l:'未采用' } ] },
+        { key:'qoder_note',   label:'具体建议及人工检查', control:'textarea', optional:true,
+          disclosure:'补充 AI 建议处理', ph:'选一条相关 AI 建议：采用、修改或放弃了什么？怎样检查？' },
+        { key:'event_at',     label:'决定日期', control:'date' },
+        { key:'evidence_refs', label:'对话或材料位置', control:'link_select', optional:true,
+          disclosure:'关联材料或位置' } ] } ] },
+
+    { id:'checks', label:'检查与改进', devCheck:'检查记录是否覆盖了主要功能？教学情境试用是否至少有一条草案？', questions:[
+      { id:'Q07', label:'检查功能与教学用途', control:'cards', store:'checks', addLabel:'添加检查',
+        prefix:'T', summary:['target','check_date','result'],
+        embedScenarios: true,
+        fields:[
+        { key:'target',        label:'检查哪个功能', control:'function_select' },
+        { key:'artifact_ref',  label:'对应作品或文件', control:'link_select', optional:true,
+          disclosure:'关联作品' },
+        { key:'check_date',    label:'检查日期', control:'date' },
+        { key:'tested_version',label:'保留版本信息', control:'version_select', mustConfirm:true },
+        { key:'how',           label:'具体操作', control:'textarea', ph:'说明操作步骤、输入与条件。' },
+        { key:'expected',      label:'预期结果', control:'textarea', ph:'在检查前说明可观察结果。' },
+        { key:'actual',        label:'实际结果', control:'textarea', disabledWhen:{ field:'result', v:'not_tested' }, ph:'填写实际观察及证据。' },
+        { key:'result',        label:'检查结论', control:'select', noDefault:true, options:[
+          { v:'met', l:'符合预期' }, { v:'unmet', l:'不符合预期' }, { v:'not_tested', l:'尚未检查' } ] },
+        { key:'next_action',   label:'后续处理', control:'textarea', optional:true, ph:'区分内容、数据、逻辑和交互问题。' } ],
+        scenarioFields: [
+        { key:'task',              label:'什么教学情境与任务', control:'textarea', ph:'说明教学情境和要完成的任务。' },
+        { key:'planned_use',      label:'准备怎样使用平台', control:'textarea', ph:'会查找什么、作出什么选择、使用哪些结果。' },
+        { key:'success_criteria', label:'准备看什么表现判断是否支持任务', control:'textarea', ph:'说明判断支持到位的具体表现。' },
+        { key:'trial_type',       label:'试用者', control:'select', noDefault:true, options:[
+          { v:'not_tried', l:'未试用' }, { v:'self', l:'本组' },
+          { v:'peer', l:'同伴' }, { v:'target', l:'目标用户' } ] },
+        { key:'participant_count', label:'试用人数', control:'integer', ph:'非负整数' },
+        { key:'trial_date',       label:'试用日期', control:'date' },
+        { key:'actual_observation', label:'哪些观察表明有用或仍不足', control:'textarea',
+          disabledWhen:{ field:'trial_type', v:'not_tried' }, ph:'已试用时填写实际观察。' },
+        { key:'artifact_ref',     label:'对应作品', control:'link_select', optional:true,
+          disclosure:'关联作品' },
+        { key:'function_refs',    label:'对应功能', control:'link_select', optional:true,
+          disclosure:'关联功能' } ] },
+      { id:'Q08', label:'根据证据修改', control:'cards', store:'revisions', addLabel:'添加修改记录',
+        prefix:'RV', summary:['problem','changed'],
+        fields:[
+        { key:'source_refs',   label:'依据哪项检查或反馈', control:'link_select' },
+        { key:'problem',       label:'针对什么问题', control:'textarea' },
+        { key:'changed',       label:'修改了哪里', control:'textarea', ph:'写清问题、改前改后、相应版本和来源。' },
+        { key:'artifact_ref',  label:'对应作品或文件', control:'link_select', optional:true,
+          disclosure:'关联作品' },
+        { key:'recheck_plan',  label:'准备看什么表现，怎样复查', control:'textarea', ph:'说明复查的具体观察点和方法。' },
+        { key:'recheck_date',  label:'复查日期', control:'date' },
+        { key:'recheck_actual', label:'复查实际结果', control:'textarea', optional:true,
+          disclosure:'补充复查结果', ph:'复查完成后填写实际结果。' } ],
+        extraField: { key:'next', label:'尚存问题', control:'textarea', ph:'区分功能缺口、待检验需求和已知限制。' } } ] }
   ],
   project: [
     { key:'class_group',      label:'班级和组号', control:'text',  fromGroup:true },
     { key:'members',          label:'小组成员', control:'members', fromGroup:true },
-    { key:'subject',          label:'学科与教材册次', control:'text' },
     { key:'platform_name',    label:'平台名称', control:'text' },
-    { key:'focus_unit',       label:'重点或候选单元', control:'text', optional:true },
-    { key:'entry_url',        label:'平台入口', control:'text', kind:'url' },
-    { key:'source_location',  label:'源文件和运行说明位置', control:'text' },
-    { key:'platform_version', label:'当前平台版本', control:'text' }
+    { key:'subject',          label:'学科与教材册次', control:'text' },
+    { key:'teaching_use',     label:'主要教学用途', control:'select', noDefault:true, options:[
+      { v:'teacher_prep', l:'教师备课' }, { v:'student_self', l:'学生自学' },
+      { v:'class_activity', l:'课堂活动' }, { v:'other', l:'其他' } ] },
+    { key:'teaching_use_note', label:'教学用途补充说明', control:'textarea', optional:true,
+      disclosure:'补充教学用途说明' }
   ]
 };
 /* ---------- 旧快照标签冻结（04 配置替换前） ---------- */
@@ -375,7 +414,7 @@ function fLabel(q, f) {
   if (activeSnapLabels) { const v = activeSnapLabels[q.id]; return v && v.f[f.key] !== undefined ? v.f[f.key] : f.label; }
   return f.label;
 }
-const PROMPT_SCHEMA = '2026-11-23';
+const PROMPT_SCHEMA = 'blue_form_research_2026_11_23';
 /* ============================================================
    数据层（移植自 平台原型/store.js 的 setField / revisions / labelOf /
    _rev+BroadcastChannel+storage 双通道同步 / presence / addCheckpoint）
@@ -478,9 +517,9 @@ function blankDb () {
             members:[], visibility:'仅教师与助教可见', assigned:false },
     atoms:{},                                   // key -> {text, by, at}
     rows:{},                                    // blockKey -> [{_id}]
-    cards:{ functions:[], checks:[] },           // store -> [ 'F01' ]
+    cards:{ functions:[], checks:[], scenarios:[], decisions:[], revisions:[] },           // store -> [ 'F01' ]
     createdBy:{},                               // 卡片/行的创建人与时间
-    seq:{ F:0, T:0, S:0, C:0, R:0, D:0, AN:0 },
+    seq:{ F:0, T:0, S:0, C:0, R:0, D:0, AN:0, QD:0, RV:0 },
     materials:[], refs:{}, comments:[], decisions:[], legacyDecisions:[], personal:[],
     revisions:[], activity:[], snaps:[],
     createdAt:now()
@@ -537,8 +576,21 @@ function load () {
         const all = Array.isArray(o.decisions) ? o.decisions : [];
         db.decisions = all.filter(d => d && typeof d.target === 'string');
         db.legacyDecisions = all.filter(d => !d || typeof d.target !== 'string');
+        /* 蓝框重构：确保新卡片仓库存在（旧数据可能缺少 scenarios/decisions/revisions） */
+        let mc = 0;
+        ['scenarios','decisions','revisions'].forEach(s => {
+          if (!db.cards[s]) { db.cards[s] = []; mc++; }
+        });
+        if (!db.seq.QD) { db.seq.QD = 0; mc++; }
+        if (!db.seq.RV) { db.seq.RV = 0; mc++; }
         const mm = migrateRoster(), mn = fixStaleNames();
-        if (mm || mn) localStorage.setItem(DB_KEY, JSON.stringify(db));
+        /* 蓝框修订：scope 和 deferred_scope 从 Q01 移回 Q02（反转旧迁移） */
+        let ms = 0;
+        ['scope', 'deferred_scope'].forEach(f => {
+          const oldK = 'Q01.' + f, newK = 'Q02.' + f;
+          if (db.atoms[oldK] && !db.atoms[newK]) { db.atoms[newK] = db.atoms[oldK]; delete db.atoms[oldK]; ms++; }
+        });
+        if (mm || mn || ms || mc) localStorage.setItem(DB_KEY, JSON.stringify(db));
   } catch (e) { return false; }
   return true;
 }
@@ -631,8 +683,8 @@ function parseKey (k) {
   let m = k.match(/^project\.(.+)$/);              if (m) return { type:'project', field:m[1] };
   m = k.match(/^(Q\d+)\.([^#]+)$/);                if (m) return { type:'field', q:m[1], field:m[2] };
   m = k.match(/^(Q\d+)\.([^#]+)#(\d+)\.(.+)$/);    if (m) return { type:'cell', q:m[1], block:m[2], row:+m[3], col:m[4] };
-  m = k.match(/^(functions|checks)\.([A-Z]\d+)\.(.+)$/); if (m) return { type:'card', store:m[1], id:m[2], field:m[3] };
-  m = k.match(/^(functions|checks)\.([A-Z]\d+)$/); if (m) return { type:'cardRef', store:m[1], id:m[2] };
+  m = k.match(/^(functions|checks|scenarios|decisions|revisions)\.([A-Z]\d+)\.(.+)$/); if (m) return { type:'card', store:m[1], id:m[2], field:m[3] };
+  m = k.match(/^(functions|checks|scenarios|decisions|revisions)\.([A-Z]\d+)$/); if (m) return { type:'cardRef', store:m[1], id:m[2] };
   return { type:'question', q:k };
 }
 function dispVal (k, text) {
@@ -640,29 +692,36 @@ function dispVal (k, text) {
   const p = parseKey(k);
   let f = null;
   if (p.type === 'project') f = CFG.project.find(x => x.key === p.field);
-  else if (p.type === 'field') { const i = QINDEX[p.q]; f = i && i.q.fields.find(x => x.key === p.field); }
-  else if (p.type === 'card') { const q = storeCfg(p.store); f = q && q.fields.find(x => x.key === p.field); }
+  else if (p.type === 'field') { const i = QINDEX[p.q]; f = i && i.q.fields.find(x => x.key === p.field); if (!f) { for (const qi of Object.values(QINDEX)) { f = qi.q.fields.find(x => x.key === p.field); if (f) break; } } }
+  else if (p.type === 'card') { const q = storeCfg(p.store); f = q && (q.fields || []).find(x => x.key === p.field); if (!f && q && q.scenarioFields) f = q.scenarioFields.find(x => x.key === p.field); }
   return (f && f.options) ? (zhOpt(f, text) || text) : text;
 }
 function labelOf (k) {
   const p = parseKey(k);
   if (p.type === 'project') { const f = CFG.project.find(x => x.key === p.field); return '项目信息 · ' + (f ? f.label : p.field); }
-  if (p.type === 'field')   { const i = QINDEX[p.q]; const f = i && i.q.fields.find(x => x.key === p.field); return secLabel(p.q) + ' · ' + (f && i ? fLabel(i.q, f) : p.field); }
+  if (p.type === 'field')   { const i = QINDEX[p.q]; let f = i && i.q.fields.find(x => x.key === p.field); let ownerQ = i && i.q; if (!f) { for (const qi of Object.values(QINDEX)) { f = qi.q.fields.find(x => x.key === p.field); if (f) { ownerQ = qi.q; break; } } } return secLabel(ownerQ ? ownerQ.id : p.q) + ' · ' + (f && ownerQ ? fLabel(ownerQ, f) : p.field); }
   if (p.type === 'cell')    { const i = QINDEX[p.q]; const b = i && i.q.fields.find(x => x.key === p.block); const c = b && (b.cols || []).find(x => x.k === p.col);
                               return secLabel(p.q) + ' · 第' + (p.row + 1) + '行 · ' + (c ? c.l : p.col); }
-  if (p.type === 'card')    { const st = storeCfg(p.store); const f = st.fields.find(x => x.key === p.field);
+  if (p.type === 'card')    { const st = storeCfg(p.store); let f = (st.fields || []).find(x => x.key === p.field); if (!f && st.scenarioFields) f = st.scenarioFields.find(x => x.key === p.field);
                               return st.secLabel + ' · ' + cardTitle(p.store, p.id) + ' · ' + (f ? fLabel(st, f) : p.field); }
   if (p.type === 'cardRef') return storeCfg(p.store).secLabel + ' · ' + cardTitle(p.store, p.id);
   const i = QINDEX[k]; return i ? secLabel(k) + ' · ' + qLabel(i.q) : k;
 }
 function secLabel (qid) { const i = QINDEX[qid]; return i ? i.sec.label : qid; }
 function storeCfg (store) {
-  const i = QINDEX[store === 'functions' ? 'Q05' : 'Q07'];
+  const map = { functions:'Q05', checks:'Q07', scenarios:'Q07', decisions:'Q06', revisions:'Q08' };
+  const i = QINDEX[map[store] || 'Q05'];
   return Object.assign({}, i.q, { secLabel:i.sec.label });
 }
 const cardTitle = (store, id) => {
   const name = get(store + '.' + id + '.name');
   const target = get(store + '.' + id + '.target');
+  const task = get(store + '.' + id + '.task');
+  const problem = get(store + '.' + id + '.problem');
+  const changed = get(store + '.' + id + '.changed');
+  if (store === 'scenarios') return task ? '情境 ' + id + '「' + task + '」' : '情境 ' + id;
+  if (store === 'decisions') return problem ? '决定 ' + id + '「' + problem.slice(0, 20) + '」' : '决定 ' + id;
+  if (store === 'revisions') return changed ? '修改 ' + id + '「' + changed.slice(0, 20) + '」' : '修改 ' + id;
   return (store === 'functions' ? (name ? '功能 ' + id + '「' + name + '」' : '功能 ' + id)
                                : (target ? '检查 ' + id + '「' + target + '」' : '检查 ' + id));
 };
@@ -693,7 +752,7 @@ function addCard (store) {
   const id = cfg.prefix + String(++db.seq[cfg.prefix]).padStart(2, '0');   // 编号平台生成，删除后不复用
   db.cards[store].push(id);
   db.createdBy[id] = { by:ME, at:now() };
-  logActivity('增加' + (store === 'functions' ? '一项功能 ' : '一条检查 ') + id);
+  logActivity('增加' + (store === 'functions' ? '一项功能 ' : store === 'scenarios' ? '一个情境 ' : store === 'decisions' ? '一条决定 ' : store === 'revisions' ? '一条修改 ' : '一条检查 ') + id);
   save(); return id;
 }
 function delCard (store, id) {
@@ -894,10 +953,11 @@ const snapshotOf = code => db.snaps.find(s => s.code === code);
 
 /* ---------- 视图状态（不入库） ---------- */
 const ui = {
-  section:'needs', panel:null, projOpen:false,
+  section:'users', panel:null, projOpen:false,
   closed:{},                          // 收起的卡片
   decDraft:{},                        // 决定表单未保存的草稿，按位置存，不入库
   exportSrc:'draft', exportFmt:'md',
+  devSpecSelected:[],                   // 导出开发说明时勾选的功能 ID
   view:'workbench',                   // workbench | snapshot | teacherGroups | teacherGroup | personal
   snapCode:null, teacherGroupId:null,
   login:{},                           // 进入界面的临时提示，不入库
@@ -1031,7 +1091,7 @@ function header (mode) {
     <div class="row1">
       <div class="grp-name">${list ? '教师端' : esc(g.groupNo) + ' · ' + esc(get('project.platform_name') || g.name)}</div>
       <div class="grp-facts">${list ? `<span>班级 <b>${esc(g.className)}</b></span>
-        <span>小组 <b>${Object.keys(ROSTER).length} 组 · ${headCount()} 人</b></span>
+        <span>小组 <b>${CLASS_NAMES.reduce((n, cn) => n + Object.keys(classRoster(cn)).length, 0)} 组 · ${headCount()} 人</b></span>
         <span>可见范围 <b>${esc(g.visibility || NODATA)}</b></span>` : `
         <span>班级组号 <b>${esc(g.className)} ${esc(g.groupNo)}</b></span>
         <span>成员 <b>${esc(members().join('、'))}</b></span>
@@ -1054,6 +1114,7 @@ function header (mode) {
       ${list ? '' : `<button class="btn" data-act="open-work">打开小组作品</button>`}
       ${canSnap ? personalEntry() : ''}
       ${canSnap ? '<button class="btn" data-act="snap-dialog">保存展示版</button>' : ''}
+      ${list ? '' : '<button class="btn" data-act="submit-hw">交作业</button>'}
       ${list ? '' : '<button class="btn pri" data-act="export-dialog">导出</button>'}
     </div>
   </div></header>`;
@@ -1101,9 +1162,19 @@ function projectCell (f) {
   }
   const lbl = f.optional ? f.label + '（选填）' : f.label;
   if (f.fromGroup && !isFilled(key)) { /* 缺失时补充，仍走同一控件 */ }
+  const ctlHtml = ctl(key, { control: f.control, ph: f.kind === 'url' ? '粘贴链接，或稍后添加材料' : '', options: f.options || [] });
+  let extra = '';
+  if (f.key === 'teaching_use') {
+    const cur = get(key);
+    if (cur === 'other') {
+      const noteKey = 'project.teaching_use_note';
+      const noteLbl = CFG.project.find(x => x.key === 'teaching_use_note');
+      extra = `<div class="f" style="margin-top:6px"><label for="${kid(noteKey)}">${esc(noteLbl ? noteLbl.label : '教学用途补充说明')}</label>
+        ${ctl(noteKey, { control:'textarea', ph:'说明具体用途' })}</div>`;
+    }
+  }
   return `<div class="f"><label for="${kid(key)}">${esc(lbl)}</label>
-    ${ctl(key, { control:'text', ph:f.kind === 'url' ? '粘贴链接，或稍后添加材料' : '' })}
-    </div>`;
+    ${ctlHtml}</div>${extra}`;
 }
 
 /* ---------- 四个入口 ---------- */
@@ -1131,16 +1202,56 @@ const emptyState = (title, line) => `<div class="es"><b>${esc(title)}</b>${line 
 /* ---------- 部分与题目 ---------- */
 function sectionBody () {
   const s = CFG.sections.find(x => x.id === ui.section);
-  return `<div role="tabpanel" aria-label="${esc(s.label)}">` + s.questions.map(q => questionView(q)).join('') + `</div>`;
+  let extra = '';
+  if (s.id === 'functions') {
+    extra = `<div style="margin:18px 0 8px"><button class="btn ghost" data-act="devspec-dialog">导出开发说明</button>
+      <span class="hint" style="margin-left:8px">选择功能，拼接项目、任务、资源格式与输入/规则/输出，供开发工具使用。</span></div>`;
+  }
+  const devCheck = s.devCheck ? `<details class="dis" style="margin-top:18px"><summary>开发检查</summary>
+    <div style="padding-top:8px"><p class="hint">${esc(s.devCheck)}</p></div></details>` : '';
+  return `<div role="tabpanel" aria-label="${esc(s.label)}">` + s.questions.map(q => questionView(q)).join('') + extra + devCheck + `</div>`;
 }
 function workbenchBody () { return projectBar() + tabs() + sectionBody(); }
 function workbenchView () { return header() + `<main class="wrap">${workbenchBody()}</main>`; }
 
 function questionView (q) {
+  if (q.id === 'Q07') return q07View(q);
+  if (q.id === 'Q08') return q08View(q);
   if (q.control === 'cards') return cardsView(q);
   return `<section class="q" id="q-${q.id}"><h2>${esc(qLabel(q))}</h2>
     ${q.fields.map(f => fieldView(q, f)).join('')}
     ${toolsBar(q.id)}</section>`;
+}
+/* Q07: 功能检查 + 教学情境试用（两个子区合并在同一主卡下） */
+function q07View (q) {
+  const checksHtml = cardsViewInner(q, 'checks', '功能检查', '添加检查');
+  const scenQ = Object.assign({}, q, { store:'scenarios', fields:q.scenarioFields || [], addLabel:'添加情境', prefix:'S', summary:['task','trial_type'] });
+  const scenHtml = cardsViewInner(scenQ, 'scenarios', '教学用途试用', '添加情境');
+  return `<section class="q" id="q-${q.id}"><h2>${esc(qLabel(q))}</h2>
+    ${checksHtml}
+    <div style="margin-top:24px;border-top:1px solid var(--line);padding-top:16px">
+      ${scenHtml}
+    </div>
+    ${toolsBar(q.id)}</section>`;
+}
+/* Q08: 修改记录卡片 + 尚存问题补充字段 */
+function q08View (q) {
+  const cardsHtml = cardsView(q);
+  const ef = q.extraField;
+  const extraHtml = ef ? `<div style="margin-top:18px"><div class="f"><label for="${kid(q.id + '.' + ef.key)}">${esc(ef.label)}</label>
+    ${ctl(q.id + '.' + ef.key, ef)}</div></div>` : '';
+  return cardsHtml.replace('</section>', extraHtml + '</section>');
+}
+/* 通用卡片渲染内部函数，支持自定义子标题 */
+function cardsViewInner (q, storeOverride, subTitle, addLabel) {
+  const list = cardsOf(storeOverride || q.store);
+  const cfg = storeCfg(storeOverride || q.store);
+  const actualQ = storeOverride ? Object.assign({}, q, { store: storeOverride }) : q;
+  return `<div><h3 style="font-size:16px;font-weight:600;margin:0 0 10px">${esc(subTitle || qLabel(q))}</h3>
+    ${list.length ? '' : emptyState('还没有记录', storeOverride === 'scenarios' ? '每组可先保存一条情境草案。' : '先试一遍平台，把实际看到的写下来。')}
+    ${list.map(id => cardView(actualQ, id)).join('')}
+    <button class="btn" data-add-card="${storeOverride || q.store}" ${RO ? 'disabled' : ''}>${esc(addLabel || q.addLabel)}</button>
+  </div>`;
 }
 function fieldView (q, f) {
   const key = q.id + '.' + f.key;
@@ -1164,6 +1275,8 @@ function ctl (key, f, over = {}) {
   if (c === 'textarea') return `<textarea ${common} rows="2"
       placeholder="${esc(f.ph || '')}">${esc(val)}</textarea>`;
   if (c === 'text') return `<input type="text" ${common} value="${esc(val)}" placeholder="${esc(f.ph || '')}">`;
+  if (c === 'date') return `<input type="date" ${common} value="${esc(val)}">`;
+  if (c === 'integer') return `<input type="number" min="0" ${common} value="${esc(val)}" placeholder="${esc(f.ph || '')}">`;
   if (c === 'select') return `<select ${common} class="${val ? '' : 'empty'}">
       <option value="">${esc(over.placeholder || '请选择')}</option>
       ${f.options.map(o => `<option value="${esc(o.v)}" ${val === o.v ? 'selected' : ''}>${esc(o.l)}</option>`).join('')}
@@ -1188,15 +1301,17 @@ function ctl (key, f, over = {}) {
   }
   if (c === 'link_select') {
     const chosen = val ? val.split('、') : [];
-    const items = cardsOf('functions').map(x => 'functions.' + x).concat(cardsOf('checks').map(x => 'checks.' + x));
-    if (!items.length) return emptyState('还没有可关联的功能或检查记录', '先在「设计功能」或「检查改进」里添加。');
+    const items = cardsOf('functions').map(x => 'functions.' + x).concat(cardsOf('checks').map(x => 'checks.' + x)).concat(cardsOf('scenarios').map(x => 'scenarios.' + x)).concat(cardsOf('decisions').map(x => 'decisions.' + x)).concat(cardsOf('revisions').map(x => 'revisions.' + x));
+    if (!items.length) return emptyState('还没有可关联的记录', '先在使用者与任务、功能与开发或检查与改进里添加。');
     return `<div id="${id}">${items.map(t => `<label style="display:block;font-size:16px">
         <input type="checkbox" data-link="${esc(key)}" data-t="${esc(t)}" ${chosen.includes(t) ? 'checked' : ''}${dis}>
         ${esc(cardLabelOf(t))}</label>`).join('')}</div>`;
   }
   return `<input type="text" ${common} value="${esc(val)}">`;
 }
-const cardLabelOf = t => { const [st, id] = t.split('.'); return (st === 'functions' ? '功能 ' : '检查 ') + cardTitle(st, id).replace(/^(功能|检查) /, ''); };
+const cardLabelOf = t => { const [st, id] = t.split('.');
+  const prefix = st === 'functions' ? '功能 ' : st === 'scenarios' ? '情境 ' : st === 'decisions' ? '决定 ' : st === 'revisions' ? '修改 ' : '检查 ';
+  return prefix + cardTitle(st, id).replace(new RegExp('^(' + prefix.trim() + ') '), ''); };
 const cellKey = (block, rowId, col) => block + '#' + rowId + '.' + col;
 
 function presenceInner (key) {
@@ -1237,7 +1352,7 @@ function editorTag (key) {
 function cardsView (q) {
   const list = cardsOf(q.store);
   return `<section class="q" id="q-${q.id}"><h2>${esc(qLabel(q))}</h2>
-    ${list.length ? '' : emptyState('还没有记录', q.store === 'functions' ? '一个功能对应一个填写区。' : '先试一遍平台，把实际看到的写下来。')}
+    ${list.length ? '' : emptyState('还没有记录', q.store === 'functions' ? '一个功能对应一个填写区。' : q.store === 'decisions' ? '每次关键选择记录一条。' : q.store === 'revisions' ? '每次修改记录一条。' : q.store === 'scenarios' ? '每组可先保存一条情境草案。' : '先试一遍平台，把实际看到的写下来。')}
     ${list.map(id => cardView(q, id)).join('')}
     <button class="btn" data-add-card="${q.store}" ${RO ? 'disabled' : ''}>${esc(q.addLabel)}</button>
     ${toolsBar(q.id)}
@@ -1264,17 +1379,40 @@ function summaryChips (q, id) {
       <span class="tag ${ownerCls(key)}">${esc(get(key + '.owner') || '负责人未填写')}</span>
       ${statusTag(get(key + '.status'))}`;
   }
+  if (q.store === 'decisions') {
+    const prob = get(key + '.problem');
+    const dt = get(key + '.event_at');
+    return `<b class="${prob ? '' : 'untitled'}">${esc(prob || '未记录问题')}</b>
+      <span class="tag mut">${esc(id)}</span>
+      ${dt ? `<span class="tag s2">${esc(dt)}</span>` : '<span class="tag none">日期未填</span>'}`;
+  }
+  if (q.store === 'revisions') {
+    const ch = get(key + '.changed');
+    const rd = get(key + '.recheck_date');
+    return `<b class="${ch ? '' : 'untitled'}">${esc(ch || '未记录修改')}</b>
+      <span class="tag mut">${esc(id)}</span>
+      ${rd ? `<span class="tag s2">复查 ${esc(rd)}</span>` : ''}`;
+  }
+  if (q.store === 'scenarios') {
+    const t = get(key + '.task');
+    const tt = get(key + '.trial_type');
+    const ttOpt = (q.scenarioFields || []).find(f => f.key === 'trial_type');
+    const ttLabel = tt && ttOpt ? (ttOpt.options.find(o => o.v === tt) || {}).l || tt : tt || '未选择';
+    return `<b class="${t ? '' : 'untitled'}">${esc(t || '未记录情境')}</b>
+      <span class="tag mut">${esc(id)}</span>
+      <span class="tag ${tt && tt !== 'not_tried' ? 's2' : 'none'}">${esc(ttLabel)}</span>`;
+  }
   const t = get(key + '.target');
   return `<b class="${t ? '' : 'untitled'}">${esc(t ? '检查：' + t : '未选择检查对象')}</b>
     <span class="tag mut">${esc(id)}</span>
-    <span class="tag mut">${esc(get(key + '.tested_version') || '版本待确认')}</span>
+    <span class="tag mut">${esc(get(key + '.check_date') || get(key + '.tested_version') || '日期未填')}</span>
     ${resultTag(get(key + '.result'))}`;
 }
 const ownerCls = key => get(key + '.owner') ? 's2' : 'none';
 const STATUS_TAG = { planned:['s1', '还没做'], doing:['s2', '正在做'], made:['s3', '已做出'], skip:['s0', '暂不做'] };
 function statusTag (v) { if (!v) return `<span class="tag none">进度未选择</span>`;
   const [c, l] = STATUS_TAG[v] || ['s0', v]; return `<span class="tag ${c}">${esc(l)}</span>`; }
-const RESULT_TAG = { met:['ok', '符合预期'], unmet:['bad', '不符合预期'], not_tested:['s0', '尚未测试'] };
+const RESULT_TAG = { met:['ok', '符合预期'], unmet:['bad', '不符合预期'], not_tested:['s0', '尚未检查'] };
 function resultTag (v) { if (!v) return `<span class="tag none">结果未选择</span>`;
   const [c, l] = RESULT_TAG[v] || ['s0', v]; return `<span class="tag ${c}">${esc(l)}</span>`; }
 
@@ -1440,13 +1578,11 @@ function panelHist (target) {
 /* ---------- 保存展示版弹窗 ---------- */
 function snapDialog () {
   const v = get('project.platform_version') || '未填写';
-  const cnt = { needs:filledCount('needs'), resources:filledCount('resources'), functions:cardsOf('functions').length, checks:cardsOf('checks').length };
+  const cnt = { users:filledCount('users'), resources:filledCount('resources'), functions:cardsOf('functions').length, decisions:cardsOf('decisions').length, checks:cardsOf('checks').length, scenarios:cardsOf('scenarios').length, revisions:cardsOf('revisions').length };
   return `<h2>保存展示版</h2><div class="bd">
     <div class="kv">
       <div><b>本次保存的平台版本：</b>${esc(v)}</div>
-      <div><b>作品入口：</b>${get('project.entry_url') ? esc(get('project.entry_url')) : '未填写，保存后展示版里仍显示未填写'}</div>
-      <div><b>源文件与运行说明位置：</b>${get('project.source_location') ? esc(get('project.source_location')) : '未填写'}</div>
-      <div><b>设计单范围：</b>明确需求 ${cnt.needs} 项 · 组织资源 ${cnt.resources} 项 · 设计功能 ${cnt.functions} 项 · 检查改进 ${cnt.checks} 条 · 关键决定 ${db.decisions.length} 条</div>
+      <div><b>设计单范围：</b>使用者与任务 ${cnt.users} 项 · 资源结构 ${cnt.resources} 项 · 功能与开发 ${cnt.functions} 项 ${cnt.decisions} 条决定 · 检查与改进 ${cnt.checks} 条检查 ${cnt.scenarios} 条情境 ${cnt.revisions} 条修改 · 关键决定 ${db.decisions.length} 条</div>
       <div><b>同时保存：</b>四部分填写内容、关键决定记录、材料引用、分工，以及当时的作品信息</div>
       <div><b>不保存：</b>个人任务作答（属于个人，不冻结进小组展示版）</div>
     </div>
@@ -1502,8 +1638,9 @@ function exportDialog (pre) {
         </select></div>
       <div class="f"><label>格式</label><div class="seg" role="group" aria-label="导出格式">
         <button data-fmt="md" aria-pressed="${ui.exportFmt === 'md'}">Markdown</button>
-        <button data-fmt="json" aria-pressed="${ui.exportFmt === 'json'}">JSON</button></div>
-        <div class="hint">两种格式读取同一份已保存内容，不分别生成答案。</div></div>
+        <button data-fmt="json" aria-pressed="${ui.exportFmt === 'json'}">JSON</button>
+        <button data-fmt="doc" aria-pressed="${ui.exportFmt === 'doc'}">文档</button></div>
+        <div class="hint">Markdown 和 JSON 读取同一份已保存内容；文档格式生成可上传到金山表单的 HTML 文件。</div></div>
     </div>
     <div class="f"><label for="export-prev">导出内容预览</label></div>
     <pre id="export-prev">${esc(previewExport())}</pre>
@@ -1514,6 +1651,11 @@ function exportDialog (pre) {
     <button class="btn pri" data-act="download-export">下载文件</button></div>`;
 }
 function previewExport () {
+  if (ui.exportFmt === 'doc') {
+    const mdText = exportText(ui.exportSrc, 'md');
+    const preview = mdText.length > 2600 ? mdText.slice(0, 2600) + '\n\n……（预览为 Markdown 文本，下载为蓝框样式 HTML 文档）' : mdText + '\n\n（下载后将生成蓝框样式 HTML 文档，可用浏览器打开并打印为 PDF）';
+    return preview;
+  }
   const t = exportText(ui.exportSrc, ui.exportFmt);
   return t.length > 2600 ? t.slice(0, 2600) + '\n\n……（预览截断，下载与复制为完整内容）' : t;
 }
@@ -1618,7 +1760,9 @@ function exportText (src, fmt) {
   activeSnapLabels = legacy ? LABELS_V1 : null;
   withData(snap ? snap.data : { atoms:db.atoms, rows:db.rows, cards:db.cards, materials:db.materials,
                                refs:db.refs, decisions:db.decisions }, () => {
-    out = fmt === 'json' ? jsonOut(snap) : mdOut(snap);
+    if (fmt === 'json') out = jsonOut(snap);
+    else if (fmt === 'doc') out = docOut(snap);
+    else out = mdOut(snap);
   });
   activeSnapLabels = null;
   return out;
@@ -1661,12 +1805,43 @@ function mdOut (snap) {
             else shown = val(k);
             L.push(`- ${fLabel(q, f)}：${shown}`);
           });
-          L.push(`- ${q.store === 'functions' ? '功能编号' : '检查编号'}：${id}（平台生成）`);
+          L.push(`- ${q.store === 'functions' ? '功能编号' : q.store === 'scenarios' ? '情境编号' : q.store === 'decisions' ? '决定编号' : q.store === 'revisions' ? '修改编号' : '检查编号'}：${id}（平台生成）`);
           L.push(`- 关联材料：${refLine(key)}`);
-          if (q.store === 'functions') L.push('- 测试结论：本条功能记录不提供测试结论，检查结果见「检查改进」');
-          if (q.store === 'checks') L.push('- 说明：检查记录独立于功能进度，「已做出」不等于测试通过');
+          if (q.store === 'functions') L.push('- 说明：本条功能记录不提供测试结论，检查结果见「检查与改进」');
+          if (q.store === 'checks') L.push('- 说明：检查记录独立于功能进度，「已实现」不等于测试通过');
+          if (q.store === 'scenarios') L.push('- 说明：教学情境试用记录教学适用性，不自动推断学生学习效果提高');
+          if (q.store === 'decisions') L.push('- 说明：关键选择记录，含 AI 建议处理与人工检查');
+          if (q.store === 'revisions') L.push('- 说明：根据证据修改的记录，含复查计划与结果');
         });
         L.push('');
+        /* Q07 嵌入的情境卡也要导出 */
+        if (q.id === 'Q07' && q.scenarioFields) {
+          const scenList = cardsOf('scenarios');
+          if (scenList.length) {
+            L.push('#### 教学用途试用');
+            scenList.forEach(id => {
+              const key = 'scenarios.' + id;
+              L.push('');
+              q.scenarioFields.forEach(f => {
+                const k = key + '.' + f.key;
+                let shown;
+                if (f.control === 'select') shown = f.noDefault && !get(k) ? NODATA + '（未选择）' : zhOpt(f, get(k));
+                else if (f.control === 'integer') shown = get(k) || NODATA;
+                else shown = val(k);
+                L.push(`- ${f.label}：${shown}`);
+              });
+              L.push(`- 情境编号：${id}（平台生成）`);
+              L.push(`- 关联材料：${refLine(key)}`);
+            });
+            L.push('');
+          }
+        }
+        /* Q08 补充字段 */
+        if (q.id === 'Q08' && q.extraField) {
+          const ef = q.extraField;
+          L.push(`- ${ef.label}：${val(q.id + '.' + ef.key)}`);
+          L.push('');
+        }
         return;
       }
       (q.fields || []).forEach(f => {
@@ -1692,8 +1867,8 @@ function mdOut (snap) {
       L.push('');
     });
   });
-  L.push('## 关键决定记录');
-  if (!db.decisions.length) L.push('- 本窗口尚未记录关键决定。上面「设计功能」里的第 6 题只收一条典型决定，逐条记录请点各处的「记录这次决定」。');
+  L.push('## 关键决定记录（工具栏）');
+  if (!db.decisions.length) L.push('- 本窗口尚未通过工具栏记录决定。Q06 的关键选择已作为多记录卡片导出在上方。');
   db.decisions.forEach(x => {
     L.push('');
     L.push(`### ${x.id}｜记在：${x.target_label}`);
@@ -1799,19 +1974,34 @@ function jsonOut (snap) {
     project:Object.fromEntries(CFG.project.map(f => [f.key, f.control === 'members' ? members() : val('project.' + f.key)])),
     practiceMap:CFG.practice,
     sections:CFG.sections.map(sec => ({ id:sec.id, label:sec.label, practice:CFG.practice[sec.id],
-      questions:sec.questions.map(q => q.control === 'cards'
-        ? { id:q.id, label:qLabel(q), kind:'records', store:q.store,
+      questions:sec.questions.map(q => {
+        if (q.control === 'cards') {
+          const storeDesc = s => s === 'functions' ? '学生自报进度，不提供测试结论' : s === 'scenarios' ? '教学情境试用记录教学适用性' : s === 'decisions' ? '关键选择记录' : s === 'revisions' ? '根据证据修改的记录' : '检查记录独立于功能进度';
+          const result = { id:q.id, label:qLabel(q), kind:'records', store:q.store,
             records:cardsOf(q.store).map(id2 => Object.assign({ recordId:id2 },
               Object.fromEntries(q.fields.map(f => [f.key, f.control === 'select' ? (get(q.store + '.' + id2 + '.' + f.key) || null) : val(q.store + '.' + id2 + '.' + f.key)])),
-              { 关联材料:refsOf(q.store + '.' + id2), 说明:q.store === 'functions' ? '学生自报进度，不提供测试结论' : '检查记录独立于功能进度' })) }
-        : { id:q.id, label:qLabel(q), kind:'fields',
+              { 关联材料:refsOf(q.store + '.' + id2), 说明:storeDesc(q.store) })) };
+          /* Q07 嵌入的情境卡 */
+          if (q.id === 'Q07' && q.scenarioFields) {
+            result.scenarios = cardsOf('scenarios').map(id2 => Object.assign({ recordId:id2 },
+              Object.fromEntries(q.scenarioFields.map(f => [f.key, f.control === 'select' ? (get('scenarios.' + id2 + '.' + f.key) || null) : val('scenarios.' + id2 + '.' + f.key)])),
+              { 关联材料:refsOf('scenarios.' + id2), 说明:storeDesc('scenarios') }));
+          }
+          /* Q08 补充字段 */
+          if (q.id === 'Q08' && q.extraField) {
+            result.extraField = { key:q.extraField.key, label:q.extraField.label, value:val(q.id + '.' + q.extraField.key) };
+          }
+          return result;
+        }
+        return { id:q.id, label:qLabel(q), kind:'fields',
             fields:(q.fields || []).map(f => f.control === 'rows'
               ? { key:f.key, label:fLabel(q, f) || '增行记录', control:'rows',
                   columns:f.cols.map(c => c.l),
                   rows:(db.rows[q.id + '.' + f.key] || []).map(r => Object.fromEntries(f.cols.map(c => [c.k, val(cellKey(q.id + '.' + f.key, r._id, c.k))]))) }
               : { key:f.key, label:fLabel(q, f), optional:!!f.optional,
                   value:(f.control === 'select' || f.control === 'version_select') ? (get(q.id + '.' + f.key) || null) : val(q.id + '.' + f.key) }),
-            关联材料:refsOf(q.id) } ) })),
+            关联材料:refsOf(q.id) };
+      }) })),
     materials:db.materials.map(m => ({ id:m.id, kind:m.kind, name:matName(m), url:m.url || null, location:m.loc || null,
       textExtracted:!!m.extracted, attachedWithPackage:!!m.extracted, addedBy:m.by, addedAt:fmtTime(m.at),
       referencedBy:Object.keys(db.refs).filter(t => (db.refs[t] || []).includes(m.id)).map(labelOf) })),
@@ -1848,20 +2038,304 @@ function jsonOut (snap) {
   };
   return JSON.stringify(body, null, 2);
 }
+
+/* ---------- 文档导出：生成蓝框样式 HTML ---------- */
+function docOut (snap) {
+  const groupNo = projVal('group_no') || db.group.groupNo || '';
+  const className = projVal('class_name') || db.group.className || '';
+  const platformName = projVal('platform_name') || '（未填写）';
+  const memberList = members().join('、') || '（未填写）';
+  const subject = projVal('subject') || '（未填写）';
+  const tu = projVal('teaching_use') || '';
+  const tuLabel = tu ? (CFG.project.find(f => f.key === 'teaching_use') || {}).options && tu : '';
+  const tuOpts = (CFG.project.find(f => f.key === 'teaching_use') || {}).options || [];
+  const tuName = tuOpts.find(o => o.v === tu);
+  const exportTime = fmtTime(now());
+
+  const DOC_CSS = `
+@page { size: A4; margin: 18mm 16mm; }
+* { box-sizing: border-box; }
+body { font-family: "Microsoft YaHei","PingFang SC","Helvetica Neue",sans-serif; font-size: 15px; line-height: 1.65; color: #222; max-width: 800px; margin: 0 auto; padding: 24px 20px; }
+h1 { text-align: center; font-size: 21px; margin: 0 0 6px; }
+.doc-sub { text-align: center; color: #666; font-size: 13px; margin-bottom: 20px; }
+.doc-meta { background: #f6f8fc; border-left: 4px solid #93ADD9; padding: 12px 16px; margin-bottom: 22px; font-size: 14px; }
+.doc-meta p { margin: 3px 0; }
+.doc-meta b { color: #444; }
+.sec-title { background: #93ADD9; color: #fff; padding: 7px 14px; font-size: 17px; font-weight: 600; margin: 24px 0 0; border-radius: 4px 4px 0 0; }
+.card { border: 1px solid #d0d0d0; border-top: none; margin-bottom: 18px; }
+.card-title { background: #f0f3f8; padding: 6px 14px; font-size: 15px; font-weight: 600; margin: 0; border-bottom: 1px solid #d0d0d0; color: #333; }
+.card-body { padding: 10px 14px; }
+.field { margin-bottom: 10px; }
+.field-label { font-weight: 600; color: #444; font-size: 14px; margin-bottom: 2px; }
+.field-val { background: #fafafa; border: 1px solid #eee; border-radius: 3px; padding: 6px 10px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+.field-val.empty { color: #aaa; font-style: italic; }
+.sub-title { font-size: 15px; font-weight: 600; color: #555; margin: 14px 0 6px; padding-left: 4px; border-left: 3px solid #93ADD9; }
+.card-item { border: 1px solid #ddd; border-radius: 4px; padding: 10px 12px; margin-bottom: 10px; background: #fcfcfc; }
+.card-item-head { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 6px; }
+table.assign { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 4px; }
+table.assign th { background: #f0f3f8; text-align: left; padding: 4px 8px; border: 1px solid #d0d0d0; font-weight: 600; }
+table.assign td { padding: 4px 8px; border: 1px solid #d0d0d0; }
+.doc-footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
+`;
+
+  const H = [];
+  H.push('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">');
+  H.push(`<title>第三周平台设计 — ${esc(className)} ${esc(groupNo)}</title>`);
+  H.push(`<style>${DOC_CSS}</style>`);
+  H.push('</head><body>');
+  H.push(`<h1>第三周小组平台开发工作台</h1>`);
+  H.push(`<div class="doc-sub">导出时间：${esc(exportTime)}</div>`);
+
+  // Meta
+  H.push('<div class="doc-meta">');
+  H.push(`<p><b>班级：</b>${esc(className)} <b>组号：</b>${esc(groupNo)}</p>`);
+  H.push(`<p><b>成员：</b>${esc(memberList)}</p>`);
+  H.push(`<p><b>平台名称：</b>${esc(platformName)} <b>学科与教材：</b>${esc(subject)}</p>`);
+  if (tuName) H.push(`<p><b>主要用途：</b>${esc(tuName.l || tu)}</p>`);
+  H.push('</div>');
+
+  // Sections
+  CFG.sections.forEach(sec => {
+    H.push(`<div class="sec-title">${esc(sec.label)}</div>`);
+    sec.questions.forEach(q => {
+      H.push('<div class="card">');
+      H.push(`<div class="card-title">${esc(qLabel(q))}</div>`);
+      H.push('<div class="card-body">');
+
+      if (q.control === 'cards') {
+        const list = cardsOf(q.store);
+        if (!list.length) {
+          H.push('<div class="field-val empty">（尚未添加记录）</div>');
+        } else {
+          list.forEach(id => {
+            const key = q.store + '.' + id;
+            H.push(`<div class="card-item">`);
+            H.push(`<div class="card-item-head">${esc(cardTitle(q.store, id))}</div>`);
+            q.fields.forEach(f => {
+              const k = key + '.' + f.key;
+              const raw = get(k);
+              const shown = f.control === 'select' ? zhOpt(f, raw) : (raw ? String(raw).trim() : '');
+              H.push(`<div class="field"><div class="field-label">${esc(f.label)}</div>`);
+              H.push(shown ? `<div class="field-val">${esc(shown)}</div>` : `<div class="field-val empty">（未填写）</div>`);
+              H.push('</div>');
+            });
+            H.push('</div>');
+          });
+        }
+        /* Q07 embedded scenarios */
+        if (q.id === 'Q07' && q.scenarioFields) {
+          H.push(`<div class="sub-title">教学用途试用</div>`);
+          const scenList = cardsOf('scenarios');
+          if (!scenList.length) {
+            H.push('<div class="field-val empty">（尚未添加情境）</div>');
+          } else {
+            scenList.forEach(id => {
+              const key = 'scenarios.' + id;
+              H.push(`<div class="card-item">`);
+              H.push(`<div class="card-item-head">${esc(cardTitle('scenarios', id))}</div>`);
+              q.scenarioFields.forEach(f => {
+                const k = key + '.' + f.key;
+                const raw = get(k);
+                const shown = f.control === 'select' ? zhOpt(f, raw) : (raw ? String(raw).trim() : '');
+                H.push(`<div class="field"><div class="field-label">${esc(f.label)}</div>`);
+                H.push(shown ? `<div class="field-val">${esc(shown)}</div>` : `<div class="field-val empty">（未填写）</div>`);
+                H.push('</div>');
+              });
+              H.push('</div>');
+            });
+          }
+        }
+      } else if (q.id === 'Q08') {
+        /* Q08: revisions cards + extra field */
+        const list = cardsOf('revisions');
+        if (!list.length) {
+          H.push('<div class="field-val empty">（尚未添加修改记录）</div>');
+        } else {
+          list.forEach(id => {
+            const key = 'revisions.' + id;
+            H.push(`<div class="card-item">`);
+            H.push(`<div class="card-item-head">${esc(cardTitle('revisions', id))}</div>`);
+            q.fields.forEach(f => {
+              const k = key + '.' + f.key;
+              const raw = get(k);
+              const shown = f.control === 'select' ? zhOpt(f, raw) : (raw ? String(raw).trim() : '');
+              H.push(`<div class="field"><div class="field-label">${esc(f.label)}</div>`);
+              H.push(shown ? `<div class="field-val">${esc(shown)}</div>` : `<div class="field-val empty">（未填写）</div>`);
+              H.push('</div>');
+            });
+            H.push('</div>');
+          });
+        }
+        /* extra field: next */
+        if (q.extraField) {
+          const ef = q.extraField;
+          const ev = get(q.id + '.' + ef.key);
+          H.push(`<div class="field"><div class="field-label">${esc(ef.label)}</div>`);
+          H.push(ev ? `<div class="field-val">${esc(ev)}</div>` : `<div class="field-val empty">（未填写）</div>`);
+          H.push('</div>');
+        }
+      } else {
+        /* Regular fields */
+        q.fields.forEach(f => {
+          if (f.control === 'rows') {
+            const blockKey = q.id + '.' + f.key;
+            const rows = db.rows[blockKey] || [];
+            if (!rows.length) {
+              H.push(`<div class="field"><div class="field-label">${esc(f.label)}</div><div class="field-val empty">（未填写）</div></div>`);
+            } else {
+              H.push(`<div class="field"><div class="field-label">${esc(f.label)}</div>`);
+              H.push('<table class="assign"><tr>');
+              f.cols.forEach(c => H.push(`<th>${esc(c.l)}</th>`));
+              H.push('</tr>');
+              rows.forEach(r => {
+                H.push('<tr>');
+                f.cols.forEach(c => H.push(`<td>${esc(get(cellKey(blockKey, r._id, c.k)) || '')}</td>`));
+                H.push('</tr>');
+              });
+              H.push('</table></div>');
+            }
+          } else {
+            const k = q.id + '.' + f.key;
+            const raw = get(k);
+            const shown = f.control === 'select' ? zhOpt(f, raw) : (raw ? String(raw).trim() : '');
+            H.push(`<div class="field"><div class="field-label">${esc(f.label)}</div>`);
+            H.push(shown ? `<div class="field-val">${esc(shown)}</div>` : `<div class="field-val empty">（未填写）</div>`);
+            H.push('</div>');
+          }
+        });
+      }
+
+      H.push('</div></div>');
+    });
+  });
+
+  H.push(`<div class="doc-footer">本文档由第三周小组平台开发工作台导出</div>`);
+  H.push('</body></html>');
+  return H.join('\n');
+}
+
 function exportFileName (snap) {
   const base = (get('project.platform_name') || db.group.name).replace(/[\\/:*?"<>|\s]+/g, '-').slice(0, 28);
-  return `${base}-第三周-${snap ? snap.code : '工作稿'}.${ui.exportFmt === 'json' ? 'json' : 'md'}`;
+  const ext = ui.exportFmt === 'json' ? 'json' : ui.exportFmt === 'doc' ? 'html' : 'md';
+  return `${base}-第三周-${snap ? snap.code : '工作稿'}.${ext}`;
 }
 function doDownload () {
   const snap = ui.exportSrc === 'draft' ? null : snapshotOf(ui.exportSrc);
   const text = exportText(ui.exportSrc, ui.exportFmt);
+  const mime = ui.exportFmt === 'doc' ? 'text/html;charset=utf-8' : 'text/plain;charset=utf-8';
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type:'text/plain;charset=utf-8' }));
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
   a.download = exportFileName(snap);
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
   toast('已下载 ' + a.download);
 }
+
+/* ---------- 导出开发说明（P5 专用，spec §六） ---------- */
+function devSpecMarkdown (ids) {
+  const L = [], v = k => val(k) || '（未填写）';
+  const name = projVal('platform_name') || '（未填写）';
+  L.push('# 开发说明 · ' + name);
+  L.push('');
+  L.push('## 项目信息');
+  L.push('- 平台名称：' + name);
+  L.push('- 学科与教材：' + (projVal('subject') || '（未填写）'));
+  const tu = projVal('teaching_use');
+  const tuOpt = CFG.project.find(f => f.key === 'teaching_use');
+  const tuLabel = tuOpt ? (tuOpt.options.find(o => o.v === tu) || {}).l || '（未选择）' : '（未选择）';
+  L.push('- 主要教学用途：' + tuLabel);
+  if (tu === 'other') L.push('- 用途补充：' + (projVal('teaching_use_note') || '（未填写）'));
+  L.push('');
+  L.push('## 使用者及任务');
+  L.push('- 谁在什么情况下使用：' + v('Q01.audience'));
+  L.push('- 要完成什么学习任务：' + v('Q01.user_task'));
+  L.push('- 本周先完成哪些任务：' + v('Q02.scope'));
+  const basis = v('Q01.demand_basis');
+  if (basis !== '（未填写）') L.push('- 判断依据：' + basis);
+  L.push('');
+  L.push('## 资源结构');
+  const modules = v('Q03.modules');
+  if (modules !== '（未填写）') L.push(modules.split('\n').map(x => '> ' + x).join('\n'));
+  const rfRows = db.rows['Q04.resource_fields'] || [];
+  if (rfRows.length) {
+    L.push('');
+    L.push('**资源字段表**');
+    rfRows.forEach((r, i) => {
+      const n = val(cellKey('Q04.resource_fields', r._id, 'name'));
+      const u = val(cellKey('Q04.resource_fields', r._id, 'reason'));
+      L.push('- ' + (n || '（未填）') + '：' + (u || '（未填）'));
+    });
+  }
+  L.push('');
+  if (!ids.length) { L.push('## 本次实现的功能'); L.push('（未选择任何功能）'); }
+  else {
+    L.push('## 本次实现的功能');
+    ids.forEach(id => {
+      const k = 'functions.' + id;
+      L.push('');
+      L.push('### ' + (get(k + '.name') || '未命名功能') + '（' + id + '）');
+      L.push('- 使用者输入或选择什么：' + (get(k + '.user_action') || '（未填写）'));
+      L.push('- 平台读取什么信息：' + (get(k + '.data_inputs') || '（未填写）'));
+      L.push('- 按什么条件或步骤处理：' + (get(k + '.processing') || '（未填写）'));
+      L.push('- 输出什么结果：' + (get(k + '.output') || '（未填写）'));
+      const owner = get(k + '.owner') || '（未填写）';
+      const status = get(k + '.status');
+      const stOpt = CFG.sections.find(s=>s.id==='functions').questions[0].fields.find(f=>f.key==='status').options;
+      const stLabel = status ? ((stOpt.find(o=>o.v===status)||{}).l || status) : '（未选择）';
+      L.push('- 负责人：' + owner);
+      L.push('- 开发进度：' + stLabel);
+      const ta = get(k + '.task_alignment');
+      if (ta) L.push('- 支持哪项学习任务：' + ta);
+    });
+  }
+  L.push('');
+  L.push('## 整合安排');
+  L.push(v('Q02.integration'));
+  L.push('');
+  const missing = [];
+  ids.forEach(id => {
+    const k = 'functions.' + id;
+    const nm = get(k + '.name') || '未命名功能';
+    ['user_action','data_inputs','processing','output'].forEach(fk => {
+      if (!get(k + '.' + fk)) missing.push(nm + ' → ' + (CFG.sections.find(s=>s.id==='functions').questions[0].fields.find(f=>f.key===fk)||{}).label || fk);
+    });
+  });
+  if (missing.length) {
+    L.push('## 待确认内容');
+    missing.forEach(m => L.push('- ' + m));
+  } else if (ids.length) {
+    L.push('## 待确认内容');
+    L.push('所选功能的必填字段均已填写。');
+  }
+  L.push('');
+  L.push('---');
+  L.push('导出时间：' + fmtTime(now()) + '  记录人：' + (ME || '未登录'));
+  return L.join('\n');
+}
+
+function devSpecDialog () {
+  const fns = cardsOf('functions');
+  if (!ui.devSpecSelected.length && fns.length) ui.devSpecSelected = fns.slice();
+  ui.devSpecSelected = ui.devSpecSelected.filter(id => fns.includes(id));
+  const md = devSpecMarkdown(ui.devSpecSelected);
+  const prev = md.length > 3000 ? md.slice(0, 3000) + '\n\n……（预览截断，下载与复制为完整内容）' : md;
+  return `<h2>导出开发说明</h2><div class="bd">
+    <div class="f"><label>选择要导出的功能</label>
+      ${fns.length ? fns.map(id => {
+        const name = get('functions.' + id + '.name') || '未命名功能';
+        const checked = ui.devSpecSelected.includes(id) ? ' checked' : '';
+        return `<label style="display:block;margin:4px 0"><input type="checkbox" data-devspec-id="${esc(id)}"${checked}> ${esc(id)} ${esc(name)}</label>`;
+      }).join('') : '<p class="hint">还没有添加功能，请先在"每项功能怎样工作"中添加。</p>'}
+    </div>
+    <div class="f"><label for="devspec-prev">导出预览</label>
+      <pre id="devspec-prev" style="max-height:320px;overflow:auto;white-space:pre-wrap">${esc(prev)}</pre></div>
+  </div>
+  <div class="ft"><span class="end hint">拼接已填写内容，不生成缺失答案</span>
+    <button class="btn" data-act="close-modal">关闭</button>
+    <button class="btn" data-act="copy-devspec">复制</button>
+    <button class="btn pri" data-act="download-devspec">下载 .md</button></div>`;
+}
+
 /* ============================================================
    弹窗
    ============================================================ */
@@ -1869,6 +2343,7 @@ function modalView () {
   if (!ui.modal) return '';
   const inner = ui.modal === 'snap' ? snapDialog()
     : ui.modal === 'export' ? exportDialog()
+    : ui.modal === 'devspec' ? devSpecDialog()
     : ui.modal === 'help' ? helpView()
     : ui.modal === 'members' ? membersDialog() : '';
   return `<div id="mask" role="dialog" aria-modal="true" aria-label="对话框"><div class="dlg">${inner}</div></div>`;
@@ -1943,6 +2418,12 @@ function syncSummary (key) {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'export-src') { ui.exportSrc = el.value; render(); return; }
+  if (el.dataset.devspecId) {
+    const id = el.dataset.devspecId;
+    if (el.checked) { if (!ui.devSpecSelected.includes(id)) ui.devSpecSelected.push(id); }
+    else { ui.devSpecSelected = ui.devSpecSelected.filter(x => x !== id); }
+    render(); return;
+  }
   if (teacherMode() || !ME) return;                     // 只有登录的学生本人能改内容
   if (el.dataset.dc) {
     const i = el.dataset.dc.indexOf('|'), k = el.dataset.dc.slice(0, i), f = el.dataset.dc.slice(i + 1);
@@ -2037,6 +2518,7 @@ document.addEventListener('click', e => {
         const el = document.getElementById(kid('project.entry_url')); if (el) el.focus();
         toast('还没有填写作品入口，先补充入口链接或相关材料'); break; }
       window.open(url, '_blank', 'noopener'); break; }
+    case 'submit-hw': window.open('https://f.wps.cn/g/aEZZ7deq/', '_blank', 'noopener'); break;
     case 'snap-dialog': ui.modal = 'snap'; render(); break;
     case 'export-dialog': ui.exportSrc = d.src || (ui.exportSrc || 'draft'); ui.modal = 'export'; render(); break;
     case 'retry-save': { const ok = save(); if (!ok) toast('仍然保存失败，请先用「导出」把内容留底'); break; }
@@ -2049,6 +2531,21 @@ document.addEventListener('click', e => {
         .catch(() => { const ta = document.getElementById('export-prev');
           alert('浏览器未授权剪贴板，请在预览框中全选复制，或改用下载。'); }); break; }
     case 'download-export': doDownload(); break;
+    case 'devspec-dialog': ui.modal = 'devspec'; render(); break;
+    case 'copy-devspec': {
+      const text = devSpecMarkdown(ui.devSpecSelected);
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+        .then(() => toast('已复制开发说明（' + text.length + ' 字）'))
+        .catch(() => alert('浏览器未授权剪贴板，请在预览框中全选复制。')); break; }
+    case 'download-devspec': {
+      const text = devSpecMarkdown(ui.devSpecSelected);
+      const a = document.createElement('a');
+      const fname = (projVal('platform_name') || '平台').replace(/[^\w\u4e00-\u9fff]+/g, '_');
+      a.href = URL.createObjectURL(new Blob([text], { type:'text/markdown;charset=utf-8' }));
+      a.download = fname + '_开发说明.md';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+      toast('已下载 ' + a.download); break; }
     case 'help': ui.modal = 'help'; render(); break;
     case 'back-work': ui.view = isTeacher() ? 'teacherGroup' : 'workbench'; render(); break;
     case 't-open': ui.view = 'teacherGroup'; render(); break;
@@ -2091,7 +2588,7 @@ document.addEventListener('click', e => {
     case 'demo-clear': if (confirm('清空本机内容？展示版快照与编辑记录会一并删除。')) {
         localStorage.removeItem(DB_KEY); db = blankDb(); logout(); sessCodeOk(machineClass() || '科教班');
         applyProjectSeed(); snapshotBeforeRemote = JSON.parse(JSON.stringify(db.atoms));
-        ui.section = 'needs'; ui.panel = null; ui.decDraft = {}; save(); render(); toast('已清空，请重新选名字'); } break;
+        ui.section = 'users'; ui.panel = null; ui.decDraft = {}; save(); render(); toast('已清空，请重新选名字'); } break;
     case 'join-save': {
       const cls = d.cls || '科教班';
       const c = readCode('j-' + cls);
