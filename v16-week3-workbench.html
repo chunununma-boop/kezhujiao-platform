@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第三周小组平台开发工作台</title>
+<style>
+:root{
+  --fg:#26333f; --mut:#657382; --line:#d8e1e8; --bg:#f4f6f8; --card:#fff;
+  --pri:#466b8a; --pri-bg:#edf2f6; --ok:#52745f; --warn:#966b34; --bad:#a95f58;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit;cursor:pointer}
+a{color:var(--pri)}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px}
+.bar-in{max-width:980px;margin:0 auto}
+.row1{display:flex;gap:10px 18px;align-items:flex-start;flex-wrap:wrap}
+.grp-name{font-size:16px;font-weight:600}
+.grp-facts{display:flex;gap:2px 14px;flex-wrap:wrap;font-size:14px;color:var(--mut);flex:1;min-width:200px}
+.grp-facts b{color:var(--fg);font-weight:500}
+.row2{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.spacer{flex:1}
+.save-state{font-size:14px;color:var(--mut)}
+.save-state.ok{color:var(--ok)} .save-state.bad{color:var(--bad)}
+.who{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mut)}
+.tasks{display:inline-flex;gap:4px;align-items:center;font-size:14px;color:var(--mut)}
+.tasks .now{font-size:14px;padding:5px 11px;border-radius:999px;background:var(--pri-bg);border:1px solid var(--pri);color:var(--pri);font-weight:600}
+.tasks a{font-size:14px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);color:var(--mut);background:#fff;text-decoration:none}
+.tasks a:hover{color:var(--pri);border-color:var(--pri)}
+.btn{font-size:15px;padding:7px 13px;border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--fg)}
+.btn:hover{border-color:#b9c9d6;background:#f8fafb}
+.btn.pri{border-color:var(--pri);background:var(--pri);color:#fff}
+.btn.pri:hover{background:#3b5b76}
+.btn.ghost{border-color:transparent;color:var(--pri);background:none;padding:6px 8px}
+.btn.sm{font-size:14px;padding:4px 9px}
+.btn:focus-visible,.tab:focus-visible,.seg button:focus-visible,
+input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,
+[tabindex]:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+
+/* ---------- 空状态 ---------- */
+.es{margin:2px 0 12px}
+.es b{display:block;font-size:16px;font-weight:600;color:var(--fg)}
+.es span{display:block;font-size:13px;color:var(--mut);max-width:440px;margin-top:3px}
+
+/* ---------- 入口：两扇门 ---------- */
+.gate{max-width:420px;margin:0 auto;padding:54px 20px 60px}
+.gate h1{font-size:19px;font-weight:600;margin:0 0 6px}
+.gate .lead,.lead{font-size:13px;color:var(--mut);margin:0 0 18px}
+.gate .fld,.fld{font-size:14px;font-weight:600;color:var(--mut);margin:0 0 7px}
+.doors{display:grid;gap:12px}
+.door{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:15px 17px;color:var(--fg)}
+.door:hover{border-color:var(--pri)}
+.door b{display:block;font-size:16px;font-weight:600}
+.door span{display:block;font-size:13px;color:var(--mut);margin-top:4px}
+.gate input.pw{display:block;width:100%;padding:11px 13px;font-size:16px;margin:0 0 14px;
+  border:2px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--fg)}
+.gate input.pw:focus{outline:none;border-color:var(--pri)}
+.codes{display:flex;gap:10px;justify-content:center;margin:0 0 16px}
+.codes input.code{width:64px;height:72px;text-align:center;font-size:2rem;font-weight:600;padding:0;
+  border:2px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--fg)}
+.codes input.code:focus{outline:none;border-color:var(--pri)}
+.go{display:block;width:100%;font-size:15px;padding:11px 14px;border:1px solid var(--pri);
+  background:var(--pri);color:#fff;border-radius:8px}
+.go:hover{background:#3b5b76}
+.err{display:none;margin:0 0 14px;padding:8px 11px;font-size:13px;color:#b91c1c;
+  background:#f8eeee;border:1px solid #fca5a5;border-radius:8px}
+.err.on{display:block}
+.pick{display:grid;gap:10px;margin-top:4px}
+.pgrp{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.pgrp b{display:block;font-size:14px;font-weight:600;color:var(--mut);margin-bottom:7px}
+.pms{display:flex;gap:8px;flex-wrap:wrap}
+.pms button{font-size:15px;padding:7px 13px;border:1px solid var(--line);background:#fff;
+  border-radius:999px;color:var(--fg)}
+.pms button:hover{border-color:var(--pri);color:var(--pri)}
+.pgrp.mine{border-color:var(--pri)}
+.pgrp.out b,.pgrp.out .pms button{color:var(--mut)}
+.pgrp.out .pms button{background:#f7f9fa;cursor:default}
+.pgrp.out .pms button:hover{border-color:var(--line);color:var(--mut)}
+
+/* ---------- 容器 ---------- */
+.wrap{max-width:980px;margin:0 auto;padding:14px 20px 100px}
+
+/* ---------- 项目信息 ---------- */
+.proj{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.proj-hd{display:flex;gap:10px;align-items:center;padding:10px 16px;cursor:pointer;font-size:15px;list-style:none}
+.proj-hd::-webkit-details-marker{display:none}
+.proj-hd::before{content:"⌄";color:var(--mut);font-size:12px}
+.proj:not([open]) .proj-hd::before{content:"›"}
+.proj-hd .sum{color:var(--mut);font-size:14px;flex:1}
+.proj-bd{padding:2px 16px 14px;border-top:1px solid var(--line);display:grid;gap:12px 18px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+
+/* ---------- 四个入口 ---------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none}
+.tab{font-size:15px;padding:7px 14px;border:1px solid var(--line);background:var(--card);border-radius:999px;color:var(--mut)}
+.tab[aria-selected=true]{border-color:var(--pri);background:var(--pri-bg);color:var(--pri);font-weight:600}
+.tab i{font-style:normal;font-size:13px;opacity:.85;margin-left:6px}
+
+/* ---------- 题目卡片 ---------- */
+.q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
+.q>h2{font-size:17px;margin:0 0 12px;font-weight:600;line-height:1.45}
+.f{margin:0 0 12px}
+.f:last-of-type{margin-bottom:0}
+.f>label,.f>.lab{display:block;font-size:14px;font-weight:600;margin-bottom:4px;color:var(--mut)}
+.f .opt{font-size:13px;color:var(--mut);font-weight:normal;margin-left:5px}
+input[type=text],textarea,select{font:inherit;font-size:16px;width:100%;padding:9px 11px;border:1px solid var(--line);
+  border-radius:8px;background:#fff;color:var(--fg)}
+textarea{resize:vertical;min-height:60px;line-height:1.6;overflow:hidden}
+input::placeholder,textarea::placeholder{color:#8b97a3}
+input:focus,textarea:focus,select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(70,107,138,.18);outline:none}
+input:disabled,textarea:disabled,select:disabled{background:#edf2f6;color:#8b97a3;box-shadow:none;border-color:var(--line)}
+select.empty{color:#8b97a3}
+.two{display:grid;gap:12px 18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+
+/* ---------- 选填条目折叠 ---------- */
+details.dis{margin-top:10px}
+details.dis>summary{cursor:pointer;font-size:14px;color:var(--pri);list-style:none}
+details.dis>summary::-webkit-details-marker{display:none}
+details.dis>summary::before{content:"› ";font-weight:700}
+details.dis[open]>summary::before{content:"⌄ "}
+
+/* ---------- 增行表 ---------- */
+.rows{width:100%;border-collapse:collapse;margin:2px 0 4px}
+.rows th{font-size:14px;color:var(--mut);text-align:left;font-weight:600;padding:0 8px 5px 0}
+.rows td{padding:0 8px 8px 0;vertical-align:top}
+.rows .rm{white-space:nowrap}
+.rows td .by{font-size:13px;color:var(--mut);padding-top:3px}
+
+/* ---------- 功能 / 检查卡 ---------- */
+.rec{border:1px solid var(--line);border-radius:var(--r);margin:0 0 10px;background:#fbfcfd;overflow:hidden}
+.rec>summary{padding:12px 14px;display:flex;gap:8px 12px;align-items:baseline;flex-wrap:wrap;font-size:16px;list-style:none;cursor:pointer}
+.rec>summary::-webkit-details-marker{display:none}
+.rec>summary::before{content:"⌄";color:var(--mut);font-size:12px}
+.rec:not([open])>summary::before{content:"›"}
+.rec>summary b{font-weight:600}
+.rec>summary .untitled{color:#8b97a3;font-weight:400}
+.rec>summary .end{flex:1}
+.rec>.bd{padding:4px 14px 14px;border-top:1px solid var(--line)}
+.tag{font-size:13px;background:#edf2f6;color:#41596f;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.tag.s0{background:#e9edf1;color:#657382}
+.tag.s1{background:#fbf3e6;color:#966b34}
+.tag.s2{background:#dce7ef;color:#466b8a}
+.tag.s3{background:#edf4ef;color:#52745f}
+.tag.ok{background:#edf4ef;color:#52745f}
+.tag.bad{background:#f9eeee;color:#a95f58}
+.tag.none{background:#fff;color:#8b97a3;border:1px dashed var(--line)}
+
+/* ---------- 题目底部四个按需入口 ---------- */
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.tool{font-size:15px;padding:5px 11px;border:1px solid var(--line);background:#fff;border-radius:999px;color:var(--mut)}
+.tool:hover{color:var(--pri);border-color:var(--pri)}
+.tool[aria-expanded=true]{background:var(--pri-bg);border-color:var(--pri);color:var(--pri)}
+.tool .n{font-size:12px;margin-left:4px;opacity:.8}
+.panel{margin-top:10px;background:#f8fafb;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.panel h3{font-size:15px;margin:0 0 8px;font-weight:600}
+.cmt{border-left:2px solid var(--line);padding:2px 0 2px 10px;margin:0 0 10px;font-size:14px}
+.cmt .hd{font-size:13px;color:var(--mut)}
+.cmt .hd b{color:var(--fg);font-weight:500}
+.cmt .hd .tch{color:var(--pri)}
+.cmt .rp{margin-left:12px;margin-top:6px}
+.dec{border:1px solid var(--line);border-left:3px solid var(--pri);background:#fff;border-radius:8px;padding:10px 12px;margin:0 0 12px}
+.dec .hd{font-size:16px;color:var(--mut);display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.dec .hd b{color:var(--fg);font-weight:600}
+.dec .hd .end{flex:1}
+.dec .lab{font-size:16px;color:var(--mut);margin:8px 0 2px}
+.dec .val{font-size:16px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.chk{display:flex;gap:4px 16px;flex-wrap:wrap;font-size:16px}
+.chk label{display:flex;gap:6px;align-items:center;font-size:16px}
+.ptask{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0 0 14px;background:#fff}
+.ptask .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:16px;font-weight:600;margin-bottom:2px}
+.ptask .facts{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:16px;color:var(--mut);margin:6px 0 10px}
+.ptask .facts b{color:var(--fg);font-weight:500}
+.mat{display:flex;gap:8px;align-items:baseline;font-size:14px;padding:4px 0;border-bottom:1px dashed #e2e8ee}
+.mat:last-child{border-bottom:0}
+.mat .end{flex:1}
+.hist{font-size:14px;padding:5px 0;border-bottom:1px dashed #e2e8ee}
+.hist:last-child{border-bottom:0}
+.hist .hd{color:var(--mut);font-size:13px}
+.hist .dv{display:grid;gap:4px 10px;grid-template-columns:1fr 1fr;margin-top:4px}
+.hist .dv div{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 8px;white-space:pre-wrap;word-break:break-word}
+.hist .dv .was{color:#8b97a3}
+.hist .dv .now{color:var(--fg)}
+
+/* ---------- 同框协作 ---------- */
+.presence{display:flex;gap:5px;align-items:center;font-size:13px;color:var(--mut);margin-top:4px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+.pchip{background:var(--pri-bg);color:var(--pri);border-radius:999px;padding:1px 8px;font-size:13px}
+.conflict{margin-top:8px;background:#f9eeee;border:1px solid #e3c4c0;border-radius:8px;padding:9px 11px;font-size:14px;color:#a95f58}
+.conflict .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+
+/* ---------- 在线成员 ---------- */
+.online{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--mut);flex-wrap:wrap}
+
+/* ---------- 弹窗 ---------- */
+#mask{position:fixed;inset:0;background:rgba(20,26,34,.34);display:flex;align-items:center;justify-content:center;
+  z-index:60;padding:20px}
+.dlg{background:#fff;border-radius:12px;max-width:820px;width:100%;max-height:86vh;display:flex;flex-direction:column}
+.dlg>h2{font-size:17px;margin:0;padding:14px 18px 0}
+.dlg .bd{padding:12px 18px;overflow:auto}
+.dlg .ft{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-top:1px solid var(--line)}
+.dlg .ft .end{flex:1}
+.dlg pre{font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;background:#f8fafb;
+  border:1px solid var(--line);border-radius:8px;padding:12px;max-height:46vh;overflow:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:6px 12px;font-size:14px;color:var(--mut);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--pri-bg);color:var(--pri);font-weight:600}
+.kv{font-size:14px}
+.kv div{padding:3px 0}
+.kv b{font-weight:600;color:var(--fg)}
+
+/* ---------- 只读展示版 / 教师端 ---------- */
+.ro-badge{display:inline-block;font-size:13px;background:#edf2f6;color:#41596f;border-radius:999px;padding:2px 10px}
+.ro textarea,.ro input,.ro select{pointer-events:none}
+.glist{display:grid;gap:10px}
+.gitem{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 15px;display:flex;
+  gap:8px 16px;align-items:center;flex-wrap:wrap;font-size:16px}
+.gitem .end{flex:1}
+.gitem .sm{font-size:14px;color:var(--mut)}
+h1.pg{font-size:22px;margin:4px 0 14px;font-weight:600}
+.end{flex:1}
+.hint{font-size:13px;color:var(--mut);line-height:1.55}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;background:#26333f;color:#fff;
+  font-size:14px;padding:9px 16px;border-radius:8px;max-width:90vw}
+
+/* ---------- 窄屏 ---------- */
+@media (max-width:720px){
+  body{font-size:16px}
+  .bar{padding:10px 14px}
+  .wrap{padding:12px 14px 90px}
+  .q{padding:16px 14px}
+  .q>h2{font-size:18px}
+  .proj-bd{grid-template-columns:1fr}
+  .two{grid-template-columns:1fr}
+  .row1,.row2{gap:8px 10px}
+  .tab{font-size:16px;padding:8px 12px}
+  .btn{font-size:16px;padding:7px 11px}
+  .codes input.code{width:56px;height:64px;font-size:1.7rem}
+  .rows,.rows thead,.rows tbody,.rows th,.rows td,.rows tr{display:block;width:100%}
+  .rows thead{display:none}
+  .rows td{padding:0 0 6px}
+  .hist .dv{grid-template-columns:1fr}
+  .dlg{max-height:92vh}
+}
+</style>
+<script type="module" src="../firebase-integration.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" hidden></div>
+
+<script>
+/* ============================================================
+   第三周小组平台开发工作台 · 原型 v16
+   依据 outputs/课程材料v16_第三周工作台/01_给界面设计AI的操作指南.md
+   单文件、无依赖、无构建。数据存 localStorage，供同浏览器多标签演示。
+   ============================================================ */
+
+/* ---------- 表单 schema：界面与导出共用同一份，避免文案漂移 ---------- */
+const CFG = {
+  week: '第三周',
+  title: '第三周小组平台开发工作台',
+  practice: { needs:'P3 识别与界定计算问题', resources:'P4 开发与使用抽象', functions:'P5 创建计算作品', checks:'P6 测试与改进计算作品' },
+  sections: [
+    { id:'needs', label:'明确需求', questions:[
+      { id:'Q01', label:'平台面向哪些使用者及具体任务？需求判断基于什么材料，哪些环节适合由平台处理？', fields:[
+        { key:'audience',   label:'目标使用者与使用情境', control:'text', ph:'说明学段、已有经验和实际使用场景，区分教师备课与学生学习。' },
+        { key:'user_task',  label:'平台支持的主要任务', control:'textarea', ph:'用可观察的操作或产出描述任务，说明所需信息处理。' },
+        { key:'difficulty', label:'现有困难与支持需求', control:'textarea', ph:'区分实际观察到的问题和小组尚待验证的判断。' },
+        { key:'demand_basis', label:'需求判断依据', control:'textarea', optional:true,
+          disclosure:'补充需求判断依据', ph:'关联课标、教材、用户反馈或任务分析；未经调查的需求注明为待验证假设。' } ] },
+      { id:'Q02', label:'如何将主要任务分解为可实施的子任务，并确定本轮开发范围与整合方式？', fields:[
+        { key:'scope',   label:'本轮开发范围与优先顺序', control:'textarea', ph:'说明关键子任务、先后依赖，以及时间、资源和工具约束。' },
+        { key:'assignments', label:'任务分工', control:'rows', addLabel:'添加一行分工',
+          cols:[ { k:'member', l:'成员', control:'member_select', width:'180px' },
+                 { k:'task',   l:'负责内容', control:'text' } ] },
+        { key:'deferred_scope', label:'暂缓任务及理由', control:'textarea', optional:true, ph:'按需填写。' },
+        { key:'integration', label:'模块整合与检查安排', control:'textarea', optional:true,
+          disclosure:'补充分工：怎样汇总和整合', ph:'说明共同格式、模块接口、整合负责人及交叉检查方法。' } ] } ] },
+
+    { id:'resources', label:'组织资源', questions:[
+      { id:'Q03', label:'全册资源如何分类、关联和检索？哪些共同结构可以复用，哪些差异需要保留？',
+        fields:[
+        { key:'modules',   label:'资源模块与关联关系', control:'textarea', ph:'可用目录、概念关系图或结构图说明，不只列页面名称。' },
+        { key:'find_way',  label:'分类检索与访问路径', control:'textarea', ph:'说明使用者怎样依据章节、概念、目标或用途定位资源。' },
+        { key:'why_org',   label:'组织方式的选择依据', control:'textarea', ph:'联系使用任务说明所选方式的作用及可能局限。' },
+        { key:'reuse',     label:'共同结构与必要差异', control:'textarea', ph:'比较至少两类资源或模块，说明可共用的信息、规则或组件，以及不可统一的部分。' } ] },
+      { id:'Q04', label:'资源需要保留哪些共同信息，以支持分类、调用和更新？如何检查信息质量？',
+        fields:[
+        { key:'resource_fields', label:'资源字段及其用途', control:'rows', addLabel:'添加一个记录项',
+          cols:[ { k:'name', l:'记录什么', control:'text' }, { k:'reason', l:'为什么需要', control:'text' } ] },
+        { key:'resource_quality', label:'资源质量检查依据', control:'textarea', optional:true,
+          disclosure:'补充资源质量检查说明', ph:'说明科学内容、教材目标匹配、来源与使用条件、链接有效性如何检查；引用已有标准即可。' } ] } ] },
+
+    { id:'functions', label:'设计功能', questions:[
+      { id:'Q05', label:'每项功能如何将使用者输入转化为处理结果，并支持所界定的任务？', control:'cards', store:'functions', addLabel:'添加功能',
+        prefix:'F', summary:['name','owner','status'],
+        fields:[
+        { key:'name',          label:'功能名称', control:'text' },
+        { key:'user_action',   label:'使用者操作与输入', control:'textarea', ph:'说明操作起点、输入内容或选择条件。' },
+        { key:'processing',    label:'信息处理规则', control:'textarea', ph:'说明匹配条件、判断分支、计算或存储规则；避免只写系统自动处理。' },
+        { key:'output',        label:'预期输出与完成状态', control:'textarea', ph:'说明应显示或保存什么，以及何种状态表示任务完成。' },
+        { key:'status',        label:'开发进度', control:'select', noDefault:true, options:[
+          { v:'planned', l:'还没做' }, { v:'doing', l:'正在做' }, { v:'made', l:'已做出' }, { v:'skip', l:'暂不做' } ] },
+        { key:'owner',         label:'开发负责人', control:'member_select' },
+        { key:'task_alignment', label:'对应任务及支持作用', control:'textarea', optional:true,
+          disclosure:'补充任务关联说明', ph:'关联需求或学习任务，说明该功能为何必要。' } ] },
+      { id:'Q06', label:'针对一项关键设计问题，小组比较了哪些方案，依据什么作出选择并检查生成结果？', fields:[
+        { key:'problem',  label:'关键设计问题', control:'textarea' },
+        { key:'decision', label:'采用方案与实施处理', control:'textarea' },
+        { key:'reason',   label:'方案选择与人工检查依据', control:'textarea', ph:'说明科学内容、处理逻辑或任务支持方面的判断，关联具体记录。' },
+        { key:'qoder_use', label:'Qoder建议的处理方式', control:'select', optional:true,
+          disclosure:'补充Qoder使用情况（只记典型决定，不必抄全部对话）', options:[
+          { v:'adopted',  l:'直接采用' }, { v:'modified', l:'修改后采用' },
+          { v:'dropped',  l:'放弃了这条建议' }, { v:'none', l:'本轮未涉及' } ] },
+        { key:'qoder_note', label:'相关建议与检查位置', control:'textarea', optional:true,
+          disclosure:'补充Qoder使用情况（只记典型决定，不必抄全部对话）' },
+        { key:'alternatives', label:'备选方案及取舍', control:'textarea', optional:true,
+          disclosure:'补充备选方案记录', ph:'仅记录实际考虑过的方案；没有比较记录时说明未记录，不事后补造。' } ] } ] },
+
+    { id:'checks', label:'检查改进', questions:[
+      { id:'Q07', label:'如何检查指定版本是否满足任务要求？实际结果与事先设定的判据有何差异？', control:'cards', store:'checks', addLabel:'添加检查',
+        prefix:'T', summary:['target','tested_version','result'],
+        fields:[
+        { key:'target',        label:'测试对象', control:'function_select' },
+        { key:'tested_version',label:'所测平台版本', control:'version_select', mustConfirm:true },
+        { key:'how',           label:'测试任务、输入与操作条件', control:'textarea', ph:'按需覆盖常规操作、无结果、错误输入或其他关键边界情况；说明设备与额外帮助。' },
+        { key:'expected',      label:'预期结果与通过判据', control:'textarea', ph:'在测试前说明可观察结果，不以感觉好用作为唯一判据。' },
+        { key:'actual',        label:'实际结果与证据位置', control:'textarea', disabledWhen:{ field:'result', v:'not_tested' }, ph:'填写实际观察及相应材料；未测试则保留未测试状态。' },
+        { key:'result',        label:'测试结论', control:'select', noDefault:true, options:[
+          { v:'met', l:'符合预期' }, { v:'unmet', l:'不符合预期' }, { v:'not_tested', l:'尚未测试' } ] },
+        { key:'next_action',   label:'问题定位与处理安排', control:'textarea', optional:true, ph:'区分内容、数据、逻辑和交互问题，必要时记录复测计划。' } ] },
+      { id:'Q08', label:'本轮依据哪些证据作出了哪些修改？尚存限制准备如何验证？', fields:[
+        { key:'changed', label:'已完成的修订及依据', control:'textarea', ph:'写清问题、改前改后、相应版本和来源；未复测时不声称改进已有效。' },
+        { key:'next',    label:'尚存问题与后续验证', control:'textarea', ph:'区分功能缺口、待检验需求和已知限制，说明拟采用的检查任务。' },
+        { key:'links',   label:'关联的功能、测试与材料', control:'link_select', optional:true,
+          disclosure:'关联具体功能、测试记录或材料' } ] } ] }
+  ],
+  project: [
+    { key:'class_group',      label:'班级和组号', control:'text',  fromGroup:true },
+    { key:'members',          label:'小组成员', control:'members', fromGroup:true },
+    { key:'subject',          label:'学科与教材册次', control:'text' },
+    { key:'platform_name',    label:'平台名称', control:'text' },
+    { key:'focus_unit',       label:'重点或候选单元', control:'text', optional:true },
+    { key:'entry_url',        label:'平台入口', control:'text', kind:'url' },
+    { key:'source_location',  label:'源文件和运行说明位置', control:'text' },
+    { key:'platform_version', label:'当前平台版本', control:'text' }
+  ]
+};
+/* ---------- 旧快照标签冻结（04 配置替换前） ---------- */
+const LABELS_V1 = {
+  Q01: { q:'这个平台给谁用，解决什么问题？', f:{ audience:'给谁用', user_task:'帮他们完成什么', difficulty:'目前有什么困难' }},
+  Q02: { q:'这轮准备完成什么？', f:{ scope:'这轮先做什么', assignments:'谁负责哪部分', deferred_scope:'暂缓哪些内容', integration:'怎样汇总和整合' }},
+  Q03: { q:'全册资源怎样组织？', f:{ modules:'主要模块或章节', find_way:'怎样找到所需资源', why_org:'为什么这样组织', reuse:'哪些结构或功能可以共用' }},
+  Q04: { q:'每条资源需要记录什么？', f:{ resource_fields:'' }},
+  Q05: { q:'平台要有哪些功能？', f:{ name:'功能名称', user_action:'使用者做什么', processing:'平台怎样处理', output:'最后得到什么', status:'做到哪一步了', owner:'谁负责' }},
+  Q06: { q:'开发时做过哪一个重要决定？', f:{ problem:'遇到了什么问题', decision:'最后怎么做', reason:'为什么这样做', qoder_use:'建议处理', qoder_note:'具体是哪条建议、关联哪次对话或文件' }},
+  Q07: { q:'试一下，实际情况怎样？', f:{ target:'检查对象', tested_version:'所测平台版本', how:'怎样试', expected:'希望出现什么', actual:'实际出现什么', result:'结果', next_action:'接下来怎么处理' }},
+  Q08: { q:'这轮改了什么，接下来还要做什么？', f:{ changed:'已经改了什么，为什么', next:'接下来还要做什么', links:'关联的功能与检查记录' }}
+};
+let activeSnapLabels = null;
+function qLabel(q) {
+  if (activeSnapLabels) { const v = activeSnapLabels[q.id]; return v ? v.q : q.label; }
+  return q.label;
+}
+function fLabel(q, f) {
+  if (activeSnapLabels) { const v = activeSnapLabels[q.id]; return v && v.f[f.key] !== undefined ? v.f[f.key] : f.label; }
+  return f.label;
+}
+const PROMPT_SCHEMA = '2026-11-23';
+/* ============================================================
+   数据层（移植自 平台原型/store.js 的 setField / revisions / labelOf /
+   _rev+BroadcastChannel+storage 双通道同步 / presence / addCheckpoint）
+   全部可编辑内容统一按 atom 键存 db.atoms，便于留痕、导出与快照比对。
+   ============================================================ */
+
+/* ---------- 已确认的班级与组队名单（2026-11-23 教师确认：2 班 19 组 56 人） ---------- */
+const CLASS_NAMES = ['科教班', '国优班'];
+const CLASSES = {
+  '科教班': {
+    roster: {
+      '第1组':['孙千然','朱倢伃','李吉梅'],
+      '第2组':['陈然','詹淑惺','余佳珈'],
+      '第3组':['黄彤','杨正馨','刘尚怡'],
+      '第4组':['黄鈺婷','黄楠','刘倩'],
+      '第5组':['张笑笑','迪娜拉·吐鲁松别克','封烨'],
+      '第6组':['祝萱琦','陈媛'],
+      '第7组':['于点','叶蓓','茅一萱'],
+      '第8组':['孙硕','李俊坤','苏天深']
+    },
+    domains: [['物质科学',['第1组','第2组']], ['生命科学',['第3组','第4组']],
+      ['地球与宇宙科学',['第5组','第6组']], ['技术与工程',['第7组','第8组']]]
+  },
+  '国优班': {
+    roster: {
+      '第1组':['刘语桐','孙行健','戴斌辉','孙彬哲'], '第2组':['林渝翰','孙婷','倪庆华'],
+      '第3组':['王龙飞','陈怡婷','毛文轩'], '第4组':['庞羡钊','邹素芬','侯昀卓','黄家禧'],
+      '第5组':['杨子杰','苏子岚','陈洋庆'], '第6组':['应苹苹','刘源琳'],
+      '第7组':['张凌韵','杨新月'], '第8组':['周思琪','阮章婧'],
+      '第9组':['蒋安琪','单东梅'], '第10组':['刘懿慧','王晨好','马倩倩'],
+      '第11组':['徐书楠','马珂敏儿']
+    },
+    domains: [['数学',['第1组','第2组']], ['物理',['第3组']], ['化学',['第4组','第5组']],
+      ['生物',['第6组','第7组']], ['地理',['第8组','第9组']], ['信息技术',['第10组','第11组']]]
+  }
+};
+const GROUP_SEED = { className:'科教班', name:'高中数学必选一 · 资源库与教学平台' };
+const classRoster = cn => (CLASSES[cn] || {}).roster || {};
+const classDomains = cn => (CLASSES[cn] || {}).domains || [];
+const classDomainOf = (cn, gn) => { const d = classDomains(cn).find(x => x[1].indexOf(gn) >= 0); return d ? d[0] : ''; };
+const allGroups = () => CLASS_NAMES.flatMap(cn => Object.keys(classRoster(cn)));
+const classHeadCount = cn => Object.values(classRoster(cn)).reduce((n, m) => n + m.length, 0);
+const headCount = () => CLASS_NAMES.reduce((s, cn) => s + classHeadCount(cn), 0);
+const groupOf = (name, cls) => {
+  const search = cls ? [cls] : CLASS_NAMES;
+  for (const cn of search) { const r = classRoster(cn);
+    for (const gn of Object.keys(r)) if (r[gn].indexOf(name) >= 0) return { group: gn, class: cn }; }
+  return null;
+};
+const domainOf = (gn, cls) => classDomainOf(cls || '科教班', gn);
+/* 早期示例种子写出来的正文仍署示例成员，不把这些句子挂到本班同学名下 */
+const DEMO_MEMBERS = ['示例成员A','示例成员B','示例成员C'];
+const TEACHER = '教师';
+const ASSISTANT = '助教';
+
+const DB_KEY='ktpt_v16_wb', ME_KEY='ktpt_v16_me';
+/* 入口两扇门：学生门验互动码，教师门验管理密码。两者都只存校验值，明文不落存储、不进导出；登录态按标签页存 */
+const JOIN_KEY='ktpt_v16_join', ADMIN_KEY='ktpt_v16_admin', JOIN_VIEW_KEY='ktpt_v16_join_view';
+const SESS_KEY='ktpt_v16_sess';
+const CLASS_KEY='ktpt_v16_class';                  // 上一版「自设班级码」的键，启动时搬进 JOIN_KEY 后删除
+const CODE_LEN=4;
+const CLASS_CODES = { '科教班':'2468', '国优班':'1357' };
+const joinKeyFor = cls => 'ktpt_v16_join_' + cls;
+function fnv (s) { let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16); }
+function readDigest (k) {
+  try { const o = JSON.parse(localStorage.getItem(k) || 'null'); return o && o.digest ? o : null; }
+  catch (e) { return null; }
+}
+function putDigest (k, v) { const salt = Math.random().toString(36).slice(2, 12);
+  localStorage.setItem(k, JSON.stringify({ salt, digest: fnv(v + ':' + salt) })); }
+const passState = () => !!readDigest(ADMIN_KEY);
+const setPass = p => putDigest(ADMIN_KEY, p);
+const checkPass = p => { const o = readDigest(ADMIN_KEY); return !!(o && fnv(p + ':' + o.salt) === o.digest); };
+function setJoin (code, cls) { putDigest(joinKeyFor(cls), code);
+  try { sessionStorage.setItem(JOIN_VIEW_KEY, JSON.stringify({ cls, code })); } catch (e) { /* 写不进去只影响当场复查 */ } }
+const joinCode = (cls) => { try { const o = JSON.parse(sessionStorage.getItem(JOIN_VIEW_KEY) || 'null');
+  return o && o.cls === cls ? o.code || '' : ''; } catch (e) { return ''; } };
+function checkJoin (code, cls) { const o = readDigest(joinKeyFor(cls));
+  return o ? fnv(code + ':' + o.salt) === o.digest : code === (CLASS_CODES[cls] || ''); }
+const joinFp = (cls) => { const o = readDigest(joinKeyFor(cls || '')); return o ? o.digest : 'preset'; };
+function readSess () { try { return JSON.parse(sessionStorage.getItem(SESS_KEY) || 'null') || {}; } catch (e) { return {}; } }
+function writeSess (s) { sessionStorage.setItem(SESS_KEY, JSON.stringify(s)); }
+function clearSess () { sessionStorage.removeItem(SESS_KEY); }
+const teacherMode = () => { const s = readSess(); return s.door === 'teacher' && !!s.v; };
+const TAB = Math.random().toString(36).slice(2);
+let chan = null; try { chan = new BroadcastChannel('ktpt16'); } catch (e) { /* 环境不支持时用 storage 事件兜底 */ }
+
+const now = () => Date.now();
+const fmtTime = ts => { const d = new Date(ts), p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const toLocalInput = ts => fmtTime(ts).replace(' ', 'T');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function blankDb () {
+  return {
+    _rev:0,
+    group:{ name:GROUP_SEED.name, className:GROUP_SEED.className, groupNo:'',
+            members:[], visibility:'仅教师与助教可见', assigned:false },
+    atoms:{},                                   // key -> {text, by, at}
+    rows:{},                                    // blockKey -> [{_id}]
+    cards:{ functions:[], checks:[] },           // store -> [ 'F01' ]
+    createdBy:{},                               // 卡片/行的创建人与时间
+    seq:{ F:0, T:0, S:0, C:0, R:0, D:0, AN:0 },
+    materials:[], refs:{}, comments:[], decisions:[], legacyDecisions:[], personal:[],
+    revisions:[], activity:[], snaps:[],
+    createdAt:now()
+  };
+}
+let db = blankDb();
+
+/* 本机可能还存着早期示例种子（示例班级A / 国优计划2班 / 示例成员…）。
+   组归属现在由第一次登录写定，识别出「仍是示例种子」时清成未写定；
+   旧版本把组号写死成名单里的某一组，存量内容确实属于那组，就按已写定保留。
+   小组自行改过的班级名与成员不在替换范围内。 */
+const DEMO_NAMES = DEMO_MEMBERS.concat(['示例成员D','示例成员E','示例成员F','林小满','陈子昂']);
+function migrateRoster () {
+  const g = db.group || (db.group = blankDb().group);
+  if (g.assigned) return false;
+  const oldCg = (g.className || '') + ' ' + (g.groupNo || '');
+  const demo = /示例班级|^国优计划2班$|^国优计划班级$/.test(g.className || '') ||
+    ((g.members || []).length > 0 && g.members.every(m => DEMO_NAMES.indexOf(m) >= 0));
+  let changed = false;
+  if (demo) { g.className = GROUP_SEED.className; g.groupNo = ''; g.members = []; g.assigned = false; changed = true; }
+  else if (g.groupNo && CLASS_NAMES.some(cn => classRoster(cn)[g.groupNo])) { g.assigned = true; changed = true; }
+  if (changed) {
+    const cg = db.atoms && db.atoms['project.class_group'];
+    if (cg && cg.text === oldCg) cg.text = g.groupNo ? g.className + ' ' + g.groupNo : '';
+  }
+  return changed;
+}
+/* 更早的示例数据用「林小满／陈子昂」充当记录人与快照成员：看着像真名，又不带「示例」，
+   教师端研究包会原样带走。这两个取值只可能来自示例种子，所以按整词换成示例成员；
+   小组自己写过的内容不在替换表里，一律不动。载入示例数据早已不再产生这两个名字。 */
+const STALE_DEMO_NAMES = { '林小满':'示例成员A', '陈子昂':'示例成员B' };
+function fixStaleNames () {
+  let hit = 0;
+  const swap = s => s.split(/([、，,;；\s]+)/).map(p => STALE_DEMO_NAMES[p] || p).join('');
+  const walk = v => {
+    if (typeof v === 'string') {
+      if (STALE_DEMO_NAMES[v]) { hit++; return STALE_DEMO_NAMES[v]; }
+      if (/林小满|陈子昂/.test(v)) { const n = swap(v); if (n !== v) { hit++; return n; } }
+      return v;
+    }
+    if (Array.isArray(v)) { v.forEach((x, i) => { v[i] = walk(x); }); return v; }
+    if (v && typeof v === 'object') { Object.keys(v).forEach(k => { v[k] = walk(v[k]); }); return v; }
+    return v;
+  };
+  walk(db);
+  return hit > 0;
+}
+
+function load () {
+  const raw = localStorage.getItem(DB_KEY);
+  if (!raw) return false;
+  try { const o = JSON.parse(raw); db = Object.assign(blankDb(), o);
+        /* 早期版本的决定记录用的是另一套字段，挂不上现在的位置：另存一份，不冒充新结构记录也不丢 */
+        const all = Array.isArray(o.decisions) ? o.decisions : [];
+        db.decisions = all.filter(d => d && typeof d.target === 'string');
+        db.legacyDecisions = all.filter(d => !d || typeof d.target !== 'string');
+        const mm = migrateRoster(), mn = fixStaleNames();
+        if (mm || mn) localStorage.setItem(DB_KEY, JSON.stringify(db));
+  } catch (e) { return false; }
+  return true;
+}
+function save (quiet) {
+  db._rev = (db._rev || 0) + 1;
+  try {
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    dirty = false;
+    setSaveState('saved');
+  } catch (e) { setSaveState('failed'); return false; }
+  if (!quiet && chan) chan.postMessage({ type:'db', from:TAB });
+  // 云端同步
+  if (typeof saveStudentData === 'function' && ME && db.group && db.group.assigned) {
+    saveStudentData(db.group.className, db.group.groupNo, ME, { atoms: db.atoms, cards: db.cards }).catch(() => {});
+  }
+  return true;
+}
+let saveTimer = null, dirty = false;
+function persist () { dirty = true; setSaveState('saving'); clearTimeout(saveTimer); saveTimer = setTimeout(() => save(), 400); }
+
+/* ---------- 登录态：学生门（互动码＋姓名）／教师门（管理密码），只用来标记记录人，不是账号体系 ---------- */
+function members () { return db.group.members; }
+let ME = '';
+function applySess () { const s = readSess(); ME = s.door === 'teacher' ? '' : (s.name || ''); }
+const isTeacher = () => teacherMode();
+/* 教师门没有登录姓名：留言与操作记录按「教师」标注，不写成空、也不冒充某个学生 */
+const actor = () => teacherMode() ? TEACHER : ME;
+/* 过了互动码、还没点名字：这一态只在本标签页有效，指纹 jk 让教师换码后能作废 */
+function sessCodeOk (cls) { writeSess({ door:'student', code:1, cls, jk:joinFp(cls) }); ME = ''; }
+/* 本机这份内容归第一次登录选中的组；写定后组号不再随登录人改变 */
+function assignGroup (gn, cls) {
+  const g = db.group; if (g.assigned) return;
+  const oldCg = (g.className || '') + ' ' + (g.groupNo || '');
+  g.className = cls; g.groupNo = gn; g.members = classRoster(cls)[gn].slice(); g.assigned = true;
+  const cg = db.atoms['project.class_group'];
+  if (!cg || !cg.text || cg.text === oldCg)
+    db.atoms['project.class_group'] = { text:g.className + ' ' + gn, by:ME, at:now() };
+  save(true);
+}
+const machineGroup = () => db.group.assigned ? db.group.groupNo : '';
+const machineClass = () => db.group.assigned ? db.group.className : '';
+function loginStudent (name) {
+  const info = groupOf(name); if (!info) return false;
+  const { group: gn, class: cls } = info;
+  writeSess({ v:1, door:'student', code:1, cls, jk:joinFp(cls), name, group:gn }); ME = name;
+  assignGroup(gn, cls); ui.view = 'workbench'; ui.panel = null; return true;
+}
+function loginTeacher () { writeSess({ v:1, door:'teacher' }); ME = ''; ui.view = 'teacherGroups'; }
+function logout () { const door = readSess().door; clearSess();
+  if (door) writeSess({ door });                 // 回到上一次那扇门的第一屏，但凭据要重新给
+  ME = ''; ui.login = {}; ui.view = 'workbench'; ui.panel = null; ui.modal = null; }
+
+/* ---------- 原子读写 ---------- */
+const get = k => ((db.atoms[k] || {}).text || '');
+const meta = k => db.atoms[k] || null;
+const isFilled = k => String(get(k)).trim() !== '';
+
+function put (k, value, opts = {}) {
+  const prev = get(k), cur = db.atoms[k];
+  if (cur && cur.text === value && !opts.force) return;
+  if (conflicts[k] && !opts.resolve) return;          // 同框冲突未处理前不覆盖他人内容
+  const t = now();
+  db.atoms[k] = { text:value, by:ME, at:t };
+  if (prev !== value) record(k, prev, value, t, opts.source || '填写');
+  logEdit(k, prev, value, t);
+  persist();
+}
+/* 连续输入合并成一条历史，避免每敲一个字记一条 */
+function logEdit (k, prev, next, t) {
+  const last = db.revisions[0];
+  if (last && last.key === k && last.by === ME && t - last.at < 90000) { last.next = next; last.at = t; last.count = (last.count || 1) + 1; return; }
+  db.revisions.unshift({ id:'R' + (++db.seq.R), key:k, label:labelOf(k), prev, next, by:ME, at:t, count:1, promptSchemaVersion: PROMPT_SCHEMA });
+  if (db.revisions.length > 1500) db.revisions.length = 1500;
+}
+function record (k, prev, next, t, source) {
+  if (source !== '填写') logActivity(`${source}：${labelOf(k)}`);
+}
+function logActivity (text) {
+  db.activity.unshift({ by:actor(), at:now(), text });
+  if (db.activity.length > 400) db.activity.length = 400;
+}
+
+/* ---------- 键的解析与人话标签：界面与历史只显示中文路径，不露内部键 ---------- */
+const QINDEX = {};
+CFG.sections.forEach(sec => sec.questions.forEach(q => {
+  QINDEX[q.id] = { sec, q };
+  (q.fields || []).forEach(f => { f._path = q.id + '.' + f.key; });
+}));
+function parseKey (k) {
+  let m = k.match(/^project\.(.+)$/);              if (m) return { type:'project', field:m[1] };
+  m = k.match(/^(Q\d+)\.([^#]+)$/);                if (m) return { type:'field', q:m[1], field:m[2] };
+  m = k.match(/^(Q\d+)\.([^#]+)#(\d+)\.(.+)$/);    if (m) return { type:'cell', q:m[1], block:m[2], row:+m[3], col:m[4] };
+  m = k.match(/^(functions|checks)\.([A-Z]\d+)\.(.+)$/); if (m) return { type:'card', store:m[1], id:m[2], field:m[3] };
+  m = k.match(/^(functions|checks)\.([A-Z]\d+)$/); if (m) return { type:'cardRef', store:m[1], id:m[2] };
+  return { type:'question', q:k };
+}
+function dispVal (k, text) {
+  if (!text) return text;
+  const p = parseKey(k);
+  let f = null;
+  if (p.type === 'project') f = CFG.project.find(x => x.key === p.field);
+  else if (p.type === 'field') { const i = QINDEX[p.q]; f = i && i.q.fields.find(x => x.key === p.field); }
+  else if (p.type === 'card') { const q = storeCfg(p.store); f = q && q.fields.find(x => x.key === p.field); }
+  return (f && f.options) ? (zhOpt(f, text) || text) : text;
+}
+function labelOf (k) {
+  const p = parseKey(k);
+  if (p.type === 'project') { const f = CFG.project.find(x => x.key === p.field); return '项目信息 · ' + (f ? f.label : p.field); }
+  if (p.type === 'field')   { const i = QINDEX[p.q]; const f = i && i.q.fields.find(x => x.key === p.field); return secLabel(p.q) + ' · ' + (f && i ? fLabel(i.q, f) : p.field); }
+  if (p.type === 'cell')    { const i = QINDEX[p.q]; const b = i && i.q.fields.find(x => x.key === p.block); const c = b && (b.cols || []).find(x => x.k === p.col);
+                              return secLabel(p.q) + ' · 第' + (p.row + 1) + '行 · ' + (c ? c.l : p.col); }
+  if (p.type === 'card')    { const st = storeCfg(p.store); const f = st.fields.find(x => x.key === p.field);
+                              return st.secLabel + ' · ' + cardTitle(p.store, p.id) + ' · ' + (f ? fLabel(st, f) : p.field); }
+  if (p.type === 'cardRef') return storeCfg(p.store).secLabel + ' · ' + cardTitle(p.store, p.id);
+  const i = QINDEX[k]; return i ? secLabel(k) + ' · ' + qLabel(i.q) : k;
+}
+function secLabel (qid) { const i = QINDEX[qid]; return i ? i.sec.label : qid; }
+function storeCfg (store) {
+  const i = QINDEX[store === 'functions' ? 'Q05' : 'Q07'];
+  return Object.assign({}, i.q, { secLabel:i.sec.label });
+}
+const cardTitle = (store, id) => {
+  const name = get(store + '.' + id + '.name');
+  const target = get(store + '.' + id + '.target');
+  return (store === 'functions' ? (name ? '功能 ' + id + '「' + name + '」' : '功能 ' + id)
+                               : (target ? '检查 ' + id + '「' + target + '」' : '检查 ' + id));
+};
+/* 展示用的稳定行号：rows 里存 _id，删除中间行不串号 */
+const rowIdOf = (block, idx) => (db.rows[block] && db.rows[block][idx] ? db.rows[block][idx]._id : idx);
+const rowIndexById = (block, id) => (db.rows[block] || []).findIndex(r => r._id === id);
+
+/* ---------- 增行 / 增卡 ---------- */
+function ensureRows (block) { if (!db.rows[block]) db.rows[block] = []; return db.rows[block]; }
+function addRow (block) {
+  const rows = ensureRows(block);
+  const id = rows.reduce((m, r) => Math.max(m, r._id), -1) + 1;
+  rows.push({ _id:id });
+  db.createdBy[block + '#' + id] = { by:ME, at:now() };
+  logActivity('增加一行：' + labelOf(block));
+  save(); return id;
+}
+function delRow (block, id) {
+  const rows = ensureRows(block);
+  const i = rows.findIndex(r => r._id === id); if (i < 0) return;
+  rows.splice(i, 1);
+  Object.keys(db.atoms).filter(k => k.startsWith(block + '#' + id + '.')).forEach(k => delete db.atoms[k]);
+  logActivity('删除一行：' + labelOf(block));
+  save();
+}
+function addCard (store) {
+  const cfg = storeCfg(store);
+  const id = cfg.prefix + String(++db.seq[cfg.prefix]).padStart(2, '0');   // 编号平台生成，删除后不复用
+  db.cards[store].push(id);
+  db.createdBy[id] = { by:ME, at:now() };
+  logActivity('增加' + (store === 'functions' ? '一项功能 ' : '一条检查 ') + id);
+  save(); return id;
+}
+function delCard (store, id) {
+  db.cards[store] = db.cards[store].filter(x => x !== id);
+  Object.keys(db.atoms).filter(k => k.startsWith(store + '.' + id)).forEach(k => delete db.atoms[k]);
+  Object.keys(db.refs).filter(k => k.startsWith(store + '.' + id)).forEach(k => delete db.refs[k]);
+  logActivity('删除 ' + id);
+  save();
+}
+const cardsOf = store => db.cards[store] || [];
+
+/* ---------- 材料库：上传一次，多处引用 ---------- */
+const refsOf = target => (db.refs[target] || []).slice();
+function attachMat (target, sid) {
+  const list = db.refs[target] || (db.refs[target] = []);
+  if (!list.includes(sid)) list.push(sid);
+  const m = db.materials.find(x => x.id === sid);
+  logActivity('引用材料 ' + sid + (m ? '（' + (m.name || m.url || '粘贴片段') + '）' : '') + ' 于 ' + labelOf(target));
+  save();
+}
+function detachMat (target, sid) {
+  db.refs[target] = (db.refs[target] || []).filter(x => x !== sid);
+  logActivity('取消引用 ' + sid + ' 于 ' + labelOf(target));
+  save();
+}
+function addMaterial (o) {
+  const id = 'S' + String(++db.seq.S).padStart(2, '0');
+  db.materials.push(Object.assign({ id, by:ME, at:now(), extracted:false }, o));
+  logActivity('添加材料 ' + id);
+  save(); return id;
+}
+
+/* ---------- 讨论 ---------- */
+const commentsOf = target => db.comments.filter(c => c.target === target);
+function addComment (target, text, replyTo) {
+  if (!String(text).trim()) return;
+  db.comments.push({ id:'C' + (++db.seq.C), target, text:String(text).trim(), by:actor(), at:now(), replyTo:replyTo || null });
+  logActivity((isTeacher() ? '留言' : '讨论') + '：' + labelOf(target));
+  save();
+}
+
+/* ---------- 关键决定（04 §五）：三问常驻，其余按需展开 ---------- */
+const DEC_SOURCES = ['自己操作时看到的', '组员的说法', '材料或数据', '检查记录的结果', '教师或助教的意见', 'AI 给出的建议', '其他'];
+function nextSeq (k) { db.seq[k] = (db.seq[k] || 0) + 1; return db.seq[k]; }
+const decisionsOf = target => db.decisions.filter(d => d.target === target);
+/* 事件时间与记录时间分开存：是否算「补记」由两者差值现算，不另存一个会过期的标记 */
+function decTiming (d) {
+  if (!d.event_at) return { state:'事件时间未填', tag:'s0' };
+  const ev = new Date(d.event_at).getTime();
+  if (!isFinite(ev)) return { state:'事件时间没填对', tag:'s1' };
+  const h = (d.at - ev) / 3600000;
+  if (h < -1) return { state:'事件时间晚于记录时间，请核对', tag:'s1' };
+  return h > 24 ? { state:'补记（距事件约 ' + Math.round(h / 24) + ' 天）', tag:'s1' }
+                : { state:'当场记录', tag:'s3' };
+}
+function addDecision (target, form) {
+  const t = s => String(form[s] || '').trim();
+  if (!t('problem') && !t('decision') && !t('reason')) return { err:'三个问题至少写一项，空记录不入库' };
+  const id = 'D' + String(nextSeq('D')).padStart(2, '0');
+  db.decisions.push({ id, target, target_label:labelOf(target),
+    problem:t('problem'), decision:t('decision'), reason:t('reason'),
+    sources:(form.sources || []).slice(), participants:(form.participants || []).slice(),
+    alternates:t('alternates'), check_plan:t('check_plan'), event_at:t('event_at'),
+    by:ME, at:now(), src:'学生填写', win:TASK_LABEL });
+  logActivity('记录一次决定（' + id + '）：' + labelOf(target));
+  save(); return { id };
+}
+function delDecision (id) {
+  const d = db.decisions.find(x => x.id === id); if (!d) return;
+  db.decisions = db.decisions.filter(x => x.id !== id);
+  logActivity('删除决定记录 ' + id + '：' + d.target_label);
+  save();
+}
+
+/* ---------- 个人任务（04 §六）：只读教师端登记的测量，作答只存本窗口 ---------- */
+const TCH_KEY = 'ktpt_v17_rs', TASK_LABEL = '第三周平台开发';
+function teacherDb () {
+  try { const raw = localStorage.getItem(TCH_KEY); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }                 // 教师端没在本机存过内容，或存储不可读
+}
+function tasksFromTeacher () {
+  const t = teacherDb();
+  if (!t || !t.cards || !t.cards.msrs) return [];
+  const g = (id, k) => String(((t.atoms || {})[id + '.' + k] || {}).text || '').trim();
+  return (t.cards.msrs || []).map(id => ({ id,
+    name:g(id, 'name'), ver:g(id, 'ver'), when:g(id, 'when'), kind:g(id, 'kind'), clazz:g(id, 'clazz'),
+    task:g(id, 'task'), open_at:g(id, 'open_at'), limit:g(id, 'limit'), tools:g(id, 'tools'),
+    solo:g(id, 'solo'), rubric:g(id, 'rubric'), score_src:g(id, 'score_src') }))
+    .filter(m => m.task === TASK_LABEL);
+}
+const PSTATE = ['', '已提交作答', '未提交', '技术中断'];
+const SOLO_SELF = ['', '按独立作答完成', '中途问过组员', '未约定'];
+const myPersonal = msrId => db.personal.filter(p => p.msr === msrId && p.by === ME);
+function savePersonal (msr, o) {
+  const ans = String(o.answer || '').trim(), st = String(o.state || '').trim();
+  let rec = myPersonal(msr.id)[0];
+  if (!rec) {
+    if (!ans && !st) return { err:'还没有内容可保存' };
+    rec = { id:'AN' + String(nextSeq('AN')).padStart(2, '0'), msr:msr.id, msr_name:msr.name || '未命名测量',
+            task:msr.task, by:ME, answer:'', state:'', sent_at:null, at:now(), win:TASK_LABEL, src:'学生填写' };
+    db.personal.push(rec);
+  }
+  rec.msr_name = msr.name || rec.msr_name;
+  rec.answer = ans; rec.note = String(o.note || '').trim(); rec.solo_self = String(o.solo_self || '').trim();
+  if (st && rec.state !== st) { rec.state = st; if (st === '已提交作答') rec.sent_at = now(); }
+  rec.updated_at = now();
+  logActivity('个人任务作答' + (rec.state ? '（' + rec.state + '）' : '（草稿）') + '：' + rec.msr_name);
+  save(); return { rec };
+}
+function openPersonalTasks () {
+  const t = Date.now();
+  return tasksFromTeacher().filter(m => m.open_at && new Date(m.open_at).getTime() <= t)
+    .sort((a, b) => a.open_at < b.open_at ? 1 : -1);
+}
+function waitingPersonalTasks () {
+  const t = Date.now();
+  return tasksFromTeacher().filter(m => m.open_at && new Date(m.open_at).getTime() > t);
+}
+
+/* ---------- 在线状态与同框冲突 ---------- */
+const presence = {};
+function announce (key) {
+  const msg = { type:'presence', from:TAB, by:ME, key, at:now(), role:isTeacher() ? '教师' : '学生' };
+  presence[ME + '|' + TAB] = msg;
+  if (chan) chan.postMessage(msg);
+}
+if (chan) chan.onmessage = e => {
+  if (!e.data) return;
+  if (e.data.type === 'db' && e.data.from !== TAB) mergeRemote();
+  if (e.data.type === 'presence' && e.data.from !== TAB) { presence[e.data.by + '|' + e.data.from] = e.data; refreshPresence(); }
+};
+window.addEventListener('storage', e => { if (e.key === DB_KEY) mergeRemote(); });
+
+function freshPresence () {
+  const t = now();
+  Object.keys(presence).forEach(k => { if (t - presence[k].at > 9000) delete presence[k]; });
+  return Object.values(presence);
+}
+const onlineOthers = () => freshPresence().filter(p => p.by !== ME);
+const othersOn = key => freshPresence().filter(p => p.by !== ME && p.key === key);
+
+/* 我在聚焦的框被别人改了 → 不覆盖，交给学生选择 */
+let focusKey = null, focusAt = 0, myDraft = '';
+const conflicts = {};
+let snapshotBeforeRemote = JSON.parse(JSON.stringify(db.atoms));
+
+function mergeRemote () {
+  const before = snapshotBeforeRemote;
+  load();
+  const touched = {};
+  Object.keys(db.atoms).forEach(k => {
+    const a = before[k], b = db.atoms[k];
+    if (b && (!a || a.text !== b.text) && b.by !== ME) touched[k] = b;
+  });
+  snapshotBeforeRemote = JSON.parse(JSON.stringify(db.atoms));
+  if (focusKey && touched[focusKey]) {
+    conflicts[focusKey] = { by:touched[focusKey].by, at:touched[focusKey].at,
+      theirs:touched[focusKey].text, mine:myDraft };
+  }
+  render();
+}
+function resolveConflict (key, how) {
+  const c = conflicts[key]; if (!c) return;
+  if (how === 'theirs') { db.atoms[key].text = c.theirs; }
+  else if (how === 'mine') { db.atoms[key] = { text:c.mine, by:ME, at:now() };
+    db.revisions.unshift({ id:'R' + (++db.seq.R), key, label:labelOf(key), prev:c.theirs, next:c.mine, by:ME, at:now(), count:1 }); }
+  else if (how === 'both') { const joiner = document.getElementById(kid(key))?.tagName === 'TEXTAREA' ? '\n' : '；';
+    const merged = (c.theirs && c.mine && c.theirs !== c.mine)
+    ? c.theirs + joiner + c.mine : (c.mine || c.theirs);
+    db.atoms[key] = { text:merged, by:ME, at:now() };
+    db.revisions.unshift({ id:'R' + (++db.seq.R), key, label:labelOf(key), prev:c.theirs, next:merged, by:ME, at:now(), count:1 }); }
+  delete conflicts[key];
+  logActivity('处理同框冲突：' + labelOf(key));
+  save(); render();
+}
+
+/* ---------- 保存展示版：全量快照，只读且不被后续编辑覆盖 ---------- */
+function makeSnapshot () {
+  const code = 'EX-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(db.snaps.length + 1).padStart(2, '0');
+  const snap = {
+    code, at:now(), by:ME,
+    platformVersion: get('project.platform_version') || '未填写',
+    platformName: get('project.platform_name') || '未填写',
+    entryUrl: get('project.entry_url'), sourceLocation: get('project.source_location'),
+    members: members().slice(),
+    promptSchemaVersion: PROMPT_SCHEMA,
+    note:'展示版只读快照：四部分内容、关键决定记录、材料引用、分工与当时的作品信息；个人任务作答不进快照',
+    data:{ atoms:JSON.parse(JSON.stringify(db.atoms)), rows:JSON.parse(JSON.stringify(db.rows)),
+           cards:JSON.parse(JSON.stringify(db.cards)), materials:JSON.parse(JSON.stringify(db.materials)),
+           refs:JSON.parse(JSON.stringify(db.refs)), decisions:JSON.parse(JSON.stringify(db.decisions)),
+           project:projectFromAtoms() }
+  };
+  db.snaps.unshift(snap);
+  logActivity('保存展示版 ' + code + '（平台版本 ' + snap.platformVersion + '）');
+  save(); return snap;
+}
+const snapshotOf = code => db.snaps.find(s => s.code === code);
+
+/* ---------- 视图状态（不入库） ---------- */
+const ui = {
+  section:'needs', panel:null, projOpen:false,
+  closed:{},                          // 收起的卡片
+  decDraft:{},                        // 决定表单未保存的草稿，按位置存，不入库
+  exportSrc:'draft', exportFmt:'md',
+  view:'workbench',                   // workbench | snapshot | teacherGroups | teacherGroup | personal
+  snapCode:null, teacherGroupId:null,
+  login:{},                           // 进入界面的临时提示，不入库
+  firstVisit: !localStorage.getItem(DB_KEY)
+};
+function projectFromAtoms () {
+  const o = {}; CFG.project.forEach(f => o[f.key] = get('project.' + f.key)); return o;
+}
+function applyProjectSeed () {
+  const p = db.group;
+  if (p.assigned && !get('project.class_group')) put0('project.class_group', p.className + ' ' + p.groupNo);
+  if (!get('project.platform_version')) put0('project.platform_version', 'V1');
+}
+function put0 (k, v) { if (!db.atoms[k]) db.atoms[k] = { text:v, by:'系统读取', at:now() }; }
+
+const SAVE_LABEL = { saving:'保存中', saved:'已保存', failed:'保存失败' };
+let saveState = 'saved';
+function setSaveState (s) { saveState = s; const el = document.querySelector('.save-state');
+  if (el) { el.className = 'save-state ' + (s === 'saved' ? 'ok' : s === 'failed' ? 'bad' : '');
+    el.innerHTML = s === 'failed'
+      ? '保存失败，内容仍在本页 <button class="btn sm" data-act="retry-save">重试保存</button>'
+      : SAVE_LABEL[s] + '（本机）'; } }
+/* ============================================================
+   渲染层：全部返回 HTML 字符串，一次 innerHTML 更新
+   ============================================================ */
+let RO = false;                                   // 只读（展示版 / 教师端）
+const kid = k => 'k-' + k.replace(/[^A-Za-z0-9]/g, '-');
+const NODATA = '未填写';
+
+/* ---------- 入口：两扇门 → 学生门（互动码 → 选名字）／教师门（管理密码） ---------- */
+function codeBoxes (idp) {
+  return '<div class="codes">' + Array.from({ length:CODE_LEN }, (_, i) =>
+    `<input class="code" id="${idp}-${i}" type="text" inputmode="numeric" autocomplete="off" maxlength="1" aria-label="第 ${i + 1} 位">`).join('') + '</div>';
+}
+function readCode (idp) {
+  let s = '';
+  for (let i = 0; i < CODE_LEN; i++) { const el = document.getElementById(idp + '-' + i); s += el ? el.value.trim() : ''; }
+  return s;
+}
+const pwVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+function namePickView (bar) {
+  const gn = db.group.assigned ? db.group.groupNo : '';
+  const cls = ui.login.cls || '';
+  const roster = classRoster(cls);
+  return `<div class="gate"><h1>你是哪位？</h1>
+    <p class="lead">${esc(cls)} · ${gn ? '这台电脑记的是 ' + esc(gn) + ' 的内容，请从 ' + esc(gn) + ' 里选自己的名字。'
+      : '第一次登录会把这台电脑上的内容归属到你所在的小组。'}</p>${bar}
+    <div class="pick">${Object.keys(roster).map(k => `<div class="pgrp${gn ? (k === gn ? ' mine' : ' out') : ''}">
+      <b>${esc(k)}</b><div class="pms">${roster[k].map(m =>
+        `<button data-act="choose-name" data-name="${esc(m)}"${gn && k !== gn ? ' disabled' : ''}>${esc(m)}</button>`).join('')}</div></div>`).join('')}</div>
+    <p class="lead" style="margin:14px 0 0"><button class="btn ghost" data-act="back-door">返回</button></p></div>`;
+}
+function gateView () {
+  const err = ui.login.err || '';
+  const bar = `<p class="err${err ? ' on' : ''}" role="alert">${esc(err)}</p>`;
+  const s = readSess();
+  if (!s.door) return `<div class="gate"><h1>从哪一端进入</h1>${bar}
+    <div class="doors">
+      <button class="door" data-act="enter-student"><b>学生端</b><span>输入 4 位互动码，从名单里点自己的名字。</span></button>
+      <button class="door" data-act="enter-teacher"><b>教师端</b><span>输入管理密码，查看各组内容。</span></button>
+    </div></div>`;
+  if (s.door === 'teacher') {
+    if (!passState()) return `<div class="gate"><h1>首次使用，请设置管理密码</h1>${bar}
+      <p class="fld">管理密码</p><input class="pw" id="p1" type="password" autocomplete="off">
+      <p class="fld">再输入一次</p><input class="pw" id="p2" type="password" autocomplete="off">
+      <button class="go" data-act="set-pass">保存管理密码</button></div>`;
+    return `<div class="gate"><h1>请输入管理密码</h1>${bar}
+      <input class="pw" id="p1" type="password" autocomplete="off">
+      <button class="go" data-act="check-pass">进入教师端</button>
+      <p class="lead" style="margin:14px 0 0"><button class="btn ghost" data-act="back-door">返回</button></p></div>`;
+  }
+  if (!ui.login.cls) return `<div class="gate"><h1>你是哪个班</h1>${bar}
+    <div class="doors">${CLASS_NAMES.map(cn => {
+      const gc = Object.keys(classRoster(cn)).length;
+      return `<button class="door" data-act="pick-class" data-cls="${esc(cn)}"><b>${esc(cn)}</b><span>${gc} 组 ${classHeadCount(cn)} 人</span></button>`;
+    }).join('')}</div>
+    <p class="lead" style="margin:14px 0 0"><button class="btn ghost" data-act="back-door">返回</button></p></div>`;
+  if (!s.code) return `<div class="gate"><h1>请输入互动码</h1>
+    <p class="lead">${esc(ui.login.cls)}</p>${bar}${codeBoxes('c1')}
+    <button class="go" data-act="check-join">进入学生端</button>
+    <p class="lead" style="margin:14px 0 0"><button class="btn ghost" data-act="back-door">返回</button></p></div>`;
+  return namePickView(bar);
+}
+function renderLogin () {
+  document.getElementById('app').innerHTML = gateView();
+  document.getElementById('modal').innerHTML = '';
+}
+
+function render () {
+  if (!ME && !teacherMode()) { renderLogin(); return; }
+  const a = document.activeElement;
+  const restore = a && a.dataset && a.dataset.k ? { k:a.dataset.k, s:a.selectionStart, e:a.selectionEnd } : null;
+  let html;
+  if (ui.view === 'teacherGroups') html = teacherGroupsView();
+  else if (ui.view === 'teacherGroup') html = teacherGroupView();
+  else if (ui.view === 'snapshot') html = snapshotView();
+  else if (ui.view === 'personal' && !isTeacher()) html = personalView();
+  else html = workbenchView();
+  document.getElementById('app').innerHTML = html;
+  autosizeAll(); restoreFocus(restore); setSaveState(saveState);
+  document.getElementById('modal').innerHTML = modalView() || '';
+}
+function restoreFocus (r) {
+  if (!r) return; const el = document.getElementById(kid(r.k));
+  if (el) { el.focus(); try { el.setSelectionRange(r.s, r.e); } catch (e) {} }
+}
+function autosizeAll () {
+  document.querySelectorAll('textarea[data-k], textarea[data-dc]').forEach(t => {
+    t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, 520) + 'px'; });
+}
+
+/* ---------- 顶栏 ---------- */
+function onlineHtml () {
+  const online = onlineOthers();
+  return online.length
+    ? `<i class="dot"></i> 本浏览器还有 <b>${esc([...new Set(online.map(o => o.by))].join('、'))}</b> 正在编辑`
+    : '<span class="hint">未检测到其他标签页</span>';
+}
+/* 在线与冲突标记单独刷新：不整页重渲染，免得打断填写或收起已展开的卡片 */
+function refreshPresence () {
+  const bar = document.querySelector('.online');
+  if (bar) bar.innerHTML = onlineHtml();
+  document.querySelectorAll('[data-plive]').forEach(el => { el.innerHTML = presenceInner(el.dataset.plive); });
+}
+
+function header (mode) {
+  const g = db.group, v = get('project.platform_version');
+  const list = mode === 'list';
+  const canSnap = !list && !isTeacher() && mode !== 'ro';
+  return `<header class="bar"><div class="bar-in">
+    <div class="row1">
+      <div class="grp-name">${list ? '教师端' : esc(g.groupNo) + ' · ' + esc(get('project.platform_name') || g.name)}</div>
+      <div class="grp-facts">${list ? `<span>班级 <b>${esc(g.className)}</b></span>
+        <span>小组 <b>${Object.keys(ROSTER).length} 组 · ${headCount()} 人</b></span>
+        <span>可见范围 <b>${esc(g.visibility || NODATA)}</b></span>` : `
+        <span>班级组号 <b>${esc(g.className)} ${esc(g.groupNo)}</b></span>
+        <span>成员 <b>${esc(members().join('、'))}</b></span>
+        <span>学科与教材 <b>${esc(get('project.subject') || NODATA)}</b></span>
+        <span>平台版本 <b>${esc(v || NODATA)}</b></span>`}
+      </div>
+    </div>
+    <div class="row2">
+      <span class="tasks">任务入口
+        <span class="now">平台开发</span>
+        <a href="v16-week6-lesson-design.html" title="另一份内容独立保存，切换不会覆盖">教学设计</a>
+      </span>
+      <span class="who">${isTeacher() ? '教师视图' : esc(ME + (db.group.groupNo ? ' · ' + db.group.groupNo : ''))}
+        <button class="btn ghost sm" data-act="logout">退出</button>
+      </span>
+      <span class="online">${onlineHtml()}</span>
+      <span class="spacer"></span>
+      <button class="btn ghost" data-act="help">说明</button>
+      ${list ? '' : '<span class="save-state ok" role="status"></span>'}
+      ${list ? '' : `<button class="btn" data-act="open-work">打开小组作品</button>`}
+      ${canSnap ? personalEntry() : ''}
+      ${canSnap ? '<button class="btn" data-act="snap-dialog">保存展示版</button>' : ''}
+      ${list ? '' : '<button class="btn pri" data-act="export-dialog">导出</button>'}
+    </div>
+  </div></header>`;
+}
+/* 04 §二：个人任务只在教师实际发布（开放时间已到）之后出现 */
+function personalEntry () {
+  if (ui.view === 'personal') return '<button class="btn" data-act="personal-back">返回工作台</button>';
+  const n = openPersonalTasks().length;
+  return n ? `<button class="btn" data-act="personal">个人任务（${n}）</button>` : '';
+}
+
+function helpView () {
+  return `<h2>这四部分的依据</h2><div class="bd">
+    <p>四个入口依据 K–12 Computer Science Framework（2016）的四个实践改写，是相互联系的实践，顺序不是线性步骤。官方来源：
+      <a href="https://k12cs.org/computational-thinking/" target="_blank" rel="noopener">k12cs.org/computational-thinking</a></p>
+    <ul>${CFG.sections.map(s => `<li><b>${esc(s.label)}</b> —— ${esc(CFG.practice[s.id])}</li>`).join('')}</ul>
+    ${isTeacher() ? CLASS_NAMES.map(cn => {
+      const code = joinCode(cn);
+      return `<p class="fld">${esc(cn)} 互动码</p>
+        <p class="lead" style="margin:0 0 10px">${code ? '当前为 <b>' + esc(code) + '</b>，投屏给学生即可。'
+          : '本机已换过码，明文不存在这台电脑上；需要重新下发请再设一次。'}</p>
+        ${codeBoxes('j-' + cn)}<p><button class="btn ghost" data-act="join-save" data-cls="${esc(cn)}">保存互动码</button></p>`;
+    }).join('')
+      : '<p><button class="btn ghost" data-act="demo-clear">清空本机内容</button></p>'}
+  </div><div class="ft"><button class="btn" data-act="close-modal">关闭</button></div>`;
+}
+
+/* ---------- 项目信息条（首次确认后复用，四部分内不再出现） ---------- */
+function projectBar () {
+  const filled = CFG.project.filter(f => f.control !== 'members' && isFilled('project.' + f.key)).length;
+  const total = CFG.project.filter(f => f.control !== 'members' && !f.optional).length;
+  return `<details class="proj" ${ui.projOpen ? 'open' : ''} id="proj">
+    <summary class="proj-hd"><span>本组基本信息</span>
+      <span class="sum">${filled >= total ? '已确认' : '待补充 ' + (total - filled) + ' 项'} · 平台入口 ${get('project.entry_url') ? '已填' : '未填'}</span></summary>
+    <div class="proj-bd">
+      ${CFG.project.map(f => projectCell(f)).join('')}
+    </div></details>`;
+}
+function projectCell (f) {
+  const key = 'project.' + f.key;
+  if (f.control === 'members') {
+    return `<div class="f"><label>小组成员</label>
+      <div class="hint">${esc(members().join('、'))}　<span class="tag none">由小组信息读取${isTeacher() ? '，教师可调整' : ''}</span></div>
+      ${isTeacher() ? `<button class="btn sm" data-act="edit-members" style="margin-top:6px">调整成员</button>` : ''}</div>`;
+  }
+  const lbl = f.optional ? f.label + '（选填）' : f.label;
+  if (f.fromGroup && !isFilled(key)) { /* 缺失时补充，仍走同一控件 */ }
+  return `<div class="f"><label for="${kid(key)}">${esc(lbl)}</label>
+    ${ctl(key, { control:'text', ph:f.kind === 'url' ? '粘贴链接，或稍后添加材料' : '' })}
+    </div>`;
+}
+
+/* ---------- 四个入口 ---------- */
+function tabs () {
+  return `<div class="tabs" role="tablist" aria-label="工作台四个部分">
+    ${CFG.sections.map(s => `<button class="tab" role="tab" data-sec="${s.id}"
+        aria-selected="${ui.section === s.id}">${esc(s.label)}${secCount(s)}</button>`).join('')}
+  </div>`;
+}
+function secCount (s) {
+  let filled = 0, total = 0;
+  s.questions.forEach(q => {
+    if (q.control === 'cards') { total += 1; if (cardsOf(q.store).length) filled += 1; return; }
+    (q.fields || []).forEach(f => {
+      if (f.optional || f.disclosure) return;
+      if (f.control === 'rows') { total += 1; if ((db.rows[q.id + '.' + f.key] || []).some(r => isFilled(cellKey(q.id + '.' + f.key, r._id, f.cols[0].k)))) filled += 1; return; }
+      total += 1; if (isFilled(q.id + '.' + f.key)) filled += 1;
+    });
+  });
+  return filled ? `<i>${filled}/${total}</i>` : '';
+}
+
+const emptyState = (title, line) => `<div class="es"><b>${esc(title)}</b>${line ? `<span>${esc(line)}</span>` : ''}</div>`;
+
+/* ---------- 部分与题目 ---------- */
+function sectionBody () {
+  const s = CFG.sections.find(x => x.id === ui.section);
+  return `<div role="tabpanel" aria-label="${esc(s.label)}">` + s.questions.map(q => questionView(q)).join('') + `</div>`;
+}
+function workbenchBody () { return projectBar() + tabs() + sectionBody(); }
+function workbenchView () { return header() + `<main class="wrap">${workbenchBody()}</main>`; }
+
+function questionView (q) {
+  if (q.control === 'cards') return cardsView(q);
+  return `<section class="q" id="q-${q.id}"><h2>${esc(qLabel(q))}</h2>
+    ${q.fields.map(f => fieldView(q, f)).join('')}
+    ${toolsBar(q.id)}</section>`;
+}
+function fieldView (q, f) {
+  const key = q.id + '.' + f.key;
+  if (f.control === 'rows') return rowsView(q, f, key);
+  const lab = `<label for="${kid(key)}">${esc(fLabel(q, f))}${f.optional ? '<span class="opt">（选填）</span>' : ''}</label>`;
+  const body = ctl(key, f);
+  if (f.disclosure) {
+    return `<details class="dis"><summary>${esc(f.disclosure)}</summary><div style="padding-top:8px">
+      ${lab}${body}${f.optional ? '' : ''}</div></details>`;
+  }
+  return `<div class="f">${lab}${body}${presenceLine(key)}</div>`;
+}
+
+/* ---------- 通用控件 ---------- */
+function ctl (key, f, over = {}) {
+  /* 冲突未处理时，正在编辑的框继续显示我的草稿，对方内容在提示里可查 */
+  const val = (focusKey === key && conflicts[key]) ? conflicts[key].mine : get(key);
+  const dis = (over.disabled || RO) ? ' disabled' : '';
+  const id = kid(key), common = `id="${id}" data-k="${esc(key)}"${dis}`;
+  const c = f.control;
+  if (c === 'textarea') return `<textarea ${common} rows="2"
+      placeholder="${esc(f.ph || '')}">${esc(val)}</textarea>`;
+  if (c === 'text') return `<input type="text" ${common} value="${esc(val)}" placeholder="${esc(f.ph || '')}">`;
+  if (c === 'select') return `<select ${common} class="${val ? '' : 'empty'}">
+      <option value="">${esc(over.placeholder || '请选择')}</option>
+      ${f.options.map(o => `<option value="${esc(o.v)}" ${val === o.v ? 'selected' : ''}>${esc(o.l)}</option>`).join('')}
+    </select>`;
+  if (c === 'member_select') {
+    const ms = members(), extra = val && ms.indexOf(val) < 0 ? [val] : [];
+    return `<select ${common} class="${val ? '' : 'empty'}">
+      <option value="">未选择</option>
+      ${ms.concat(extra).map(m => `<option value="${esc(m)}" ${val === m ? 'selected' : ''}>${esc(m)}${ms.indexOf(m) < 0 ? '（名单外）' : ''}</option>`).join('')}
+    </select>`;
+  }
+  if (c === 'function_select') {
+    const opts = ['整体平台'].concat(cardsOf('functions').map(id2 => id2 + ' ' + (get('functions.' + id2 + '.name') || '未命名功能')));
+    return `<select ${common} class="${val ? '' : 'empty'}"><option value="">请选择检查对象</option>
+      ${opts.map(o => `<option ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  }
+  if (c === 'version_select') {
+    const vs = [...new Set([get('project.platform_version')].concat(db.snaps.map(s => s.platformVersion)).filter(Boolean))];
+    return `<select ${common} class="${val ? '' : 'empty'}"><option value="">请确认所测版本</option>
+      ${vs.map(v => `<option ${val === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}
+      <option ${val === '版本待确认' ? 'selected' : ''}>版本待确认</option></select>`;
+  }
+  if (c === 'link_select') {
+    const chosen = val ? val.split('、') : [];
+    const items = cardsOf('functions').map(x => 'functions.' + x).concat(cardsOf('checks').map(x => 'checks.' + x));
+    if (!items.length) return emptyState('还没有可关联的功能或检查记录', '先在「设计功能」或「检查改进」里添加。');
+    return `<div id="${id}">${items.map(t => `<label style="display:block;font-size:16px">
+        <input type="checkbox" data-link="${esc(key)}" data-t="${esc(t)}" ${chosen.includes(t) ? 'checked' : ''}${dis}>
+        ${esc(cardLabelOf(t))}</label>`).join('')}</div>`;
+  }
+  return `<input type="text" ${common} value="${esc(val)}">`;
+}
+const cardLabelOf = t => { const [st, id] = t.split('.'); return (st === 'functions' ? '功能 ' : '检查 ') + cardTitle(st, id).replace(/^(功能|检查) /, ''); };
+const cellKey = (block, rowId, col) => block + '#' + rowId + '.' + col;
+
+function presenceInner (key) {
+  const others = othersOn(key);
+  const cf = conflicts[key];
+  let html = others.length ? `<div class="presence"><i class="dot"></i>${others.map(o => `<span class="pchip">${esc(o.by)} 正在这个框里输入</span>`).join('')}</div>` : '';
+  if (cf) html += `<div class="conflict" role="alert"><b>${esc(cf.by)}</b> 刚刚改过这个框，你的输入已暂存，尚未覆盖对方内容。
+    <div class="acts"><button class="btn sm" data-res="both" data-k="${esc(key)}">两份都保留</button>
+      <button class="btn sm" data-res="mine" data-k="${esc(key)}">用我的内容</button>
+      <button class="btn sm" data-res="theirs" data-k="${esc(key)}">用${esc(cf.by)}的内容</button></div>
+    <div class="hint" style="margin-top:6px">对方写的：${esc(cf.theirs).slice(0, 120) || '（空）'}</div></div>`;
+  return html;
+}
+const presenceLine = key => `<span class="plive" data-plive="${esc(key)}">${presenceInner(key)}</span>`;
+
+/* ---------- 两列 / 多列可增行表 ---------- */
+function rowsView (q, f, block) {
+  const rows = db.rows[block] || [];
+  return `<div class="f">
+    ${f.label ? `<label>${esc(fLabel(q, f))}</label>` : ''}
+    <table class="rows"><thead><tr>${f.cols.map(c => `<th>${esc(c.l)}</th>`).join('')}<th></th></tr></thead>
+    <tbody>${rows.map((r, i) => `<tr>
+        ${f.cols.map(c => { const ck = cellKey(block, r._id, c.k);
+          return `<td style="${c.width ? 'width:' + c.width : ''}"><label class="sr" for="${kid(ck)}">${esc(c.l)}第${i + 1}行</label>
+            ${ctl(ck, { control:c.control === 'member_select' ? 'member_select' : 'text', ph:c.ph })}
+            <div class="by">${esc(editorTag(ck))}</div>${presenceLine(ck)}</td>`; }).join('')}
+        <td class="rm"><button class="btn sm" data-del-row="${esc(block)}" data-id="${r._id}" ${RO ? 'disabled' : ''}>删除</button></td>
+      </tr>`).join('')}</tbody></table>
+    <button class="btn sm" data-add-row="${esc(block)}" ${RO ? 'disabled' : ''}>${esc(f.addLabel || '添加一行')}</button>
+  </div>`;
+}
+function editorTag (key) {
+  const m = meta(key); if (!m || !m.text) return '';
+  return (m.by === '系统读取' ? '来自小组信息' : m.by + ' ' + fmtTime(m.at).slice(5));
+}
+
+/* ---------- 可收起的功能卡 / 检查卡 ---------- */
+function cardsView (q) {
+  const list = cardsOf(q.store);
+  return `<section class="q" id="q-${q.id}"><h2>${esc(qLabel(q))}</h2>
+    ${list.length ? '' : emptyState('还没有记录', q.store === 'functions' ? '一个功能对应一个填写区。' : '先试一遍平台，把实际看到的写下来。')}
+    ${list.map(id => cardView(q, id)).join('')}
+    <button class="btn" data-add-card="${q.store}" ${RO ? 'disabled' : ''}>${esc(q.addLabel)}</button>
+    ${toolsBar(q.id)}
+  </section>`;
+}
+function cardView (q, id) {
+  const key = q.store + '.' + id;
+  const open = !ui.closed[key];
+  return `<details class="rec" ${open ? 'open' : ''} data-toggle="${esc(key)}">
+    <summary>${summaryChips(q, id)}<span class="end"></span>
+      ${isFilled(key + '.result') ? '' : ''}</summary>
+    <div class="bd">
+      ${q.fields.map(f => cardFieldView(q, id, f)).join('')}
+      ${toolsBar(key)}
+      ${RO ? '' : `<div style="margin-top:10px"><button class="btn sm" data-del-card="${q.store}" data-id="${id}">删除这条记录</button></div>`}
+    </div></details>`;
+}
+function summaryChips (q, id) {
+  const key = q.store + '.' + id;
+  if (q.store === 'functions') {
+    const name = get(key + '.name');
+    return `<b class="${name ? '' : 'untitled'}">${esc(name || '未命名功能')}</b>
+      <span class="tag mut">${esc(id)}</span>
+      <span class="tag ${ownerCls(key)}">${esc(get(key + '.owner') || '负责人未填写')}</span>
+      ${statusTag(get(key + '.status'))}`;
+  }
+  const t = get(key + '.target');
+  return `<b class="${t ? '' : 'untitled'}">${esc(t ? '检查：' + t : '未选择检查对象')}</b>
+    <span class="tag mut">${esc(id)}</span>
+    <span class="tag mut">${esc(get(key + '.tested_version') || '版本待确认')}</span>
+    ${resultTag(get(key + '.result'))}`;
+}
+const ownerCls = key => get(key + '.owner') ? 's2' : 'none';
+const STATUS_TAG = { planned:['s1', '还没做'], doing:['s2', '正在做'], made:['s3', '已做出'], skip:['s0', '暂不做'] };
+function statusTag (v) { if (!v) return `<span class="tag none">进度未选择</span>`;
+  const [c, l] = STATUS_TAG[v] || ['s0', v]; return `<span class="tag ${c}">${esc(l)}</span>`; }
+const RESULT_TAG = { met:['ok', '符合预期'], unmet:['bad', '不符合预期'], not_tested:['s0', '尚未测试'] };
+function resultTag (v) { if (!v) return `<span class="tag none">结果未选择</span>`;
+  const [c, l] = RESULT_TAG[v] || ['s0', v]; return `<span class="tag ${c}">${esc(l)}</span>`; }
+
+function cardFieldView (q, id, f) {
+  const key = q.store + '.' + id + '.' + f.key;
+  const lab = `<label for="${kid(key)}">${esc(fLabel(q, f))}${f.optional ? '<span class="opt">（选填）</span>' : ''}</label>`;
+  /* 「实际出现什么」在选定「尚未测试」时禁用，但不清空已写内容 */
+  const dis = f.disabledWhen ? get(q.store + '.' + id + '.' + f.disabledWhen.field) === f.disabledWhen.v : false;
+  let extra = '';
+  if (f.key === 'result') extra = pendingResultNotice(q, id);
+  const body = ctl(key, f, { disabled:dis });
+  if (f.disclosure) {
+    return `<details class="dis"><summary>${esc(f.disclosure)}</summary><div style="padding-top:8px">
+      ${lab}${body}${presenceLine(key)}${extra}</div></details>`;
+  }
+  return `<div class="f">${lab}${body}${presenceLine(key)}${extra}</div>`;
+}
+/* 选择「尚未测试」而实际结果已有内容 → 提示处理矛盾，不静默删除 */
+const pendingResult = {};
+function pendingResultNotice (q, id) {
+  const p = pendingResult[q.store + '.' + id]; if (!p) return '';
+  return `<div class="conflict" role="alert">已填写的实际结果与「尚未测试」不一致。请选择怎么处理，未处理前不改动原记录。
+    <div class="acts">
+      <button class="btn sm" data-res-result="keep" data-store="${q.store}" data-id="${id}">保留实际结果，结果选「不符合预期」</button>
+      <button class="btn sm" data-res-result="move" data-store="${q.store}" data-id="${id}">实际结果移到「接下来怎么处理」，状态改为尚未测试</button>
+      <button class="btn sm" data-res-result="clear" data-store="${q.store}" data-id="${id}">清空实际结果并记为尚未测试</button>
+      <button class="btn sm" data-res-result="cancel" data-store="${q.store}" data-id="${id}">取消这次切换</button>
+    </div></div>`;
+}
+
+/* ---------- 讨论 · 相关材料 · 修改历史（互斥展开，不挤压填写区） ---------- */
+function toolsBar (target) {
+  const p = ui.panel, on = kind => p && p.target === target && p.kind === kind;
+  const n = { discuss:commentsOf(target).length, decide:decisionsOf(target).length,
+              mats:refsOf(target).length, hist:histOf(target).length };
+  const btn = (kind, label) => `<button class="tool" data-panel="${kind}:${esc(target)}" aria-expanded="${!!on(kind)}">
+      ${label}${n[kind] ? `<span class="n">${n[kind]}</span>` : ''}</button>`;
+  return `<div class="tools">${btn('discuss', '讨论')}${btn('decide', '记录这次决定')}${btn('mats', '添加相关材料')}${btn('hist', '修改历史')}</div>
+    ${on('discuss') ? panelDiscuss(target) : ''}${on('decide') ? panelDecide(target) : ''}
+    ${on('mats') ? panelMats(target) : ''}${on('hist') ? panelHist(target) : ''}`;
+}
+/* 04 §五：三问常驻，其余按需展开；平台不代写、不补全 */
+function panelDecide (target) {
+  const ds = decisionsOf(target);
+  return `<div class="panel"><h3>记录这次决定</h3>
+    ${(db.legacyDecisions || []).length ? `<p class="hint">本机另有 ${db.legacyDecisions.length} 条早期版本的记录，字段结构不同，未列在这里。</p>` : ''}
+    ${target === 'Q06' ? `<p class="hint">第 6 题只记一条典型决定，这里按功能或检查记录逐条记，两边各存各的。</p>` : ''}
+    ${ds.length ? ds.map(decRow).join('') : emptyState('这个位置还没有决定记录', '写下遇到的问题、最后怎么定、凭什么定的。')}
+    ${RO ? (ds.length ? '' : '<p class="hint">只读视图：学生内容不在此处填写。</p>') : decForm(target)}</div>`;
+}
+function decRow (d) {
+  const tm = decTiming(d), pl = (d.participants || []).join('、'), srcs = d.sources || [];
+  return `<div class="dec"><div class="hd"><b>${esc(d.id)}</b>
+      <span class="tag ${tm.tag}">${esc(tm.state)}</span>
+      <span class="tag ${srcs.length ? 's2' : 'none'}">${srcs.length ? '依据来源 ' + srcs.length + ' 项' : '依据来源未选'}</span>
+      <span class="end"></span><span>${esc(d.by)} · 记录于 ${esc(fmtTime(d.at))}</span></div>
+    <div class="lab">遇到了什么问题</div><div class="val">${esc(d.problem) || NODATA}</div>
+    <div class="lab">最后决定怎样做</div><div class="val">${esc(d.decision) || NODATA}</div>
+    <div class="lab">依据是什么</div><div class="val">${esc(d.reason) || NODATA}</div>
+    ${srcs.length ? `<div class="lab">依据来自</div><div class="val">${srcs.map(s => `<span class="tag s2">${esc(s)}</span>`).join(' ')}</div>` : ''}
+    <details class="dis"><summary>这条的补充与时间</summary><div style="padding-top:6px">
+      <div class="lab">当时还考虑过什么</div><div class="val">${esc(d.alternates) || NODATA}</div>
+      <div class="lab">参与这次决定的人</div><div class="val">${esc(pl) || NODATA}</div>
+      <div class="lab">打算怎么看出这个决定好不好</div><div class="val">${esc(d.check_plan) || NODATA}</div>
+      <div class="lab">事件时间（学生填）</div><div class="val">${esc(d.event_at) || NODATA}</div>
+      <div class="lab">记录时间（系统）</div><div class="val">${esc(fmtTime(d.at))}</div>
+      <div class="lab">记在哪个位置</div><div class="val">${esc(d.target_label)}</div>
+    </div></details>
+    ${RO ? '' : `<div style="margin-top:8px"><button class="btn sm" data-act="dec-del" data-id="${esc(d.id)}">删除这条决定</button></div>`}
+  </div>`;
+}
+function decForm (target) {
+  const dr = ui.decDraft[target] || {}, t = esc(target);
+  const box = (kind, list, chosen) => `<div class="chk" id="dc-${kind}">${list.map(v =>
+      `<label><input type="checkbox" value="${esc(v)}" data-dc-group="${t}" data-dc-kind="${kind}"${
+        (chosen || []).includes(v) ? ' checked' : ''}> ${esc(v)}</label>`).join('')}</div>`;
+  return `<div class="two" style="margin-top:12px">
+      <div class="f"><label for="dc-problem">遇到了什么问题</label>
+        <textarea id="dc-problem" data-dc="${t}|problem" rows="2" placeholder="当时卡在哪里，具体到能认出那次操作">${esc(dr.problem || '')}</textarea></div>
+      <div class="f"><label for="dc-decision">最后决定怎样做</label>
+        <textarea id="dc-decision" data-dc="${t}|decision" rows="2" placeholder="你们实际选了什么做法">${esc(dr.decision || '')}</textarea></div>
+      <div class="f"><label for="dc-reason">依据是什么</label>
+        <textarea id="dc-reason" data-dc="${t}|reason" rows="2" placeholder="凭什么这样定：试过的结果、材料、组员说法都行">${esc(dr.reason || '')}</textarea></div>
+    </div>
+    <div class="f"><label>依据来自哪里（可多选）</label>${box('src', DEC_SOURCES, dr.sources)}
+      </div>
+    <details class="dis"><summary>补充（选填）：备选方案、谁参与、怎么检验、什么时候发生</summary>
+      <div class="two" style="padding-top:8px">
+        <div class="f"><label for="dc-alt">当时还考虑过什么</label>
+          <textarea id="dc-alt" data-dc="${t}|alternates" rows="2" placeholder="被你们放弃的做法和放弃的理由">${esc(dr.alternates || '')}</textarea></div>
+        <div class="f"><label for="dc-check">打算怎么看出这个决定好不好</label>
+          <textarea id="dc-check" data-dc="${t}|check_plan" rows="2" placeholder="下一次准备看什么现象">${esc(dr.check_plan || '')}</textarea></div>
+        <div class="f"><label>参与这次决定的人</label>${box('who', members(), dr.participants)}</div>
+        <div class="f"><label for="dc-event">这件事大约什么时候发生</label>
+          <input type="datetime-local" id="dc-event" data-dc="${t}|event_at" value="${esc(dr.event_at || '')}">
+          <div class="hint">与记录时间分开存，隔几天补写的会标成「补记」。</div></div>
+      </div></details>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+      <button class="btn pri" data-act="dec-save" data-t="${t}">保存这条决定</button></div>`;
+}
+function panelDiscuss (target) {
+  const cs = commentsOf(target);
+  return `<div class="panel"><h3>讨论</h3>
+    ${cs.length ? '' : emptyState('还没有讨论', '就这道题或这项功能留言。')}
+    ${cs.filter(c => !c.replyTo).map(c => commentHtml(c, cs)).join('')}
+    <div class="two" style="align-items:end;margin-top:10px">
+      <div class="f" style="margin:0"><label for="cmt-in">写下讨论内容</label><textarea id="cmt-in" rows="2" data-t="${esc(target)}" placeholder="写下讨论内容"></textarea></div>
+      <div class="f" style="margin:0"><button class="btn pri" data-act="say" data-t="${esc(target)}">发布讨论</button></div>
+    </div></div>`;
+}
+function commentHtml (c, all) {
+  const kids = all.filter(x => x.replyTo === c.id);
+  return `<div class="cmt"><div class="hd"><b>${esc(c.by)}</b>${c.by === TEACHER || c.by === ASSISTANT ? '<span class="tch">（教师端留言）</span>' : ''} · ${esc(fmtTime(c.at))}</div>
+    <div>${esc(c.text)}</div>
+    ${kids.map(k => `<div class="rp cmt"><div class="hd"><b>${esc(k.by)}</b> 回复 · ${esc(fmtTime(k.at))}</div><div>${esc(k.text)}</div></div>`).join('')}
+    ${RO || isTeacher() ? '' : `<div><button class="btn ghost" data-reply="${c.id}" data-t="${esc(c.target)}">回复</button></div>`}
+  </div>`;
+}
+function panelMats (target) {
+  const refs = refsOf(target).map(sid => db.materials.find(m => m.id === sid)).filter(Boolean);
+  const pool = db.materials.filter(m => !refsOf(target).includes(m.id));
+  return `<div class="panel"><h3>相关材料</h3>
+    ${refs.length ? '' : emptyState('尚未添加材料', '同一份材料添加一次后可在多处引用。')}
+    ${refs.map(m => matRow(m, target)).join('')}
+    ${RO ? '' : `<div class="two" style="margin-top:10px">
+      <div class="f"><label for="mf-${esc(target)}">上传文件</label>
+        <input type="file" id="mf-${esc(target)}" data-mat="file" data-t="${esc(target)}" accept=".md,.markdown,.txt,.json,.csv,text/plain"></div>
+      <div class="f"><label for="ml-${esc(target)}">粘贴链接</label>
+        <div style="display:flex;gap:8px"><input type="text" id="ml-${esc(target)}" data-mat="link" data-t="${esc(target)}" placeholder="https:// 或文件名以外的位置">
+        <button class="btn sm" data-mat="add-link" data-t="${esc(target)}">添加</button></div></div>
+    </div>
+    <div class="two">
+      <div class="f"><label for="mp-${esc(target)}">粘贴原始片段</label>
+        <textarea id="mp-${esc(target)}" rows="2" placeholder="粘贴原文或写清出处"></textarea></div>
+      <div class="f"><label for="mq-${esc(target)}">定位说明<span class="opt">（选填）</span></label>
+        <input type="text" id="mq-${esc(target)}" placeholder="出处或定位">
+        <button class="btn sm" data-mat="add-paste" data-t="${esc(target)}" style="margin-top:6px">添加这段材料</button></div>
+    </div>
+    ${pool.length ? `<div class="f"><label for="mr-${esc(target)}">引用本组已添加的材料</label>
+      <div style="display:flex;gap:8px"><select id="mr-${esc(target)}">${pool.map(m => `<option value="${m.id}">${esc(m.id)} · ${esc(matName(m))}</option>`).join('')}</select>
+      <button class="btn sm" data-mat="reuse" data-t="${esc(target)}">引用</button></div></div>` : ''}`}
+  </div>`;
+}
+const matName = m => m.name || m.url || (m.text ? m.text.slice(0, 24) + '…' : '未命名材料');
+function matRow (m, target) {
+  const kind = m.kind === 'file' ? '文件' : m.kind === 'link' ? '链接' : '粘贴片段';
+  return `<div class="mat"><span class="tag mut">${esc(m.id)}</span><span class="tag">${kind}</span>
+    <span class="end">${m.kind === 'link' ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.url)}</a>` : esc(matName(m))}
+      ${m.loc ? `<span class="hint">· ${esc(m.loc)}</span>` : ''}
+      <span class="hint">· ${m.extracted ? '已提取文本' : '未提取文本'} · ${esc(m.by)} ${esc(fmtTime(m.at))}</span></span>
+    ${RO ? '' : `<button class="btn ghost" data-mat="detach" data-t="${esc(target)}" data-s="${m.id}">取消引用</button>`}</div>`;
+}
+const histOf = target => db.revisions.filter(r => r.key === target || r.key.startsWith(target + '.') || r.key.startsWith(target + '#')).slice(0, 40);
+function panelHist (target) {
+  const hs = histOf(target);
+  return `<div class="panel"><h3>修改历史</h3>
+    ${hs.length ? '' : emptyState('这里还没有编辑记录')}
+    ${hs.map(r => `<div class="hist"><div class="hd">${esc(r.by)} · ${esc(fmtTime(r.at))} · ${esc(r.label)}${r.count > 1 ? ' · 连续输入' + r.count + '次合并为一条' : ''}</div>
+      <div class="dv"><div class="was">${esc(dispVal(r.key, r.prev)) || '（原为空）'}</div><div class="now">${esc(dispVal(r.key, r.next)) || '（清空）'}</div></div></div>`).join('')}
+  </div>`;
+}
+
+/* ---------- 保存展示版弹窗 ---------- */
+function snapDialog () {
+  const v = get('project.platform_version') || '未填写';
+  const cnt = { needs:filledCount('needs'), resources:filledCount('resources'), functions:cardsOf('functions').length, checks:cardsOf('checks').length };
+  return `<h2>保存展示版</h2><div class="bd">
+    <div class="kv">
+      <div><b>本次保存的平台版本：</b>${esc(v)}</div>
+      <div><b>作品入口：</b>${get('project.entry_url') ? esc(get('project.entry_url')) : '未填写，保存后展示版里仍显示未填写'}</div>
+      <div><b>源文件与运行说明位置：</b>${get('project.source_location') ? esc(get('project.source_location')) : '未填写'}</div>
+      <div><b>设计单范围：</b>明确需求 ${cnt.needs} 项 · 组织资源 ${cnt.resources} 项 · 设计功能 ${cnt.functions} 项 · 检查改进 ${cnt.checks} 条 · 关键决定 ${db.decisions.length} 条</div>
+      <div><b>同时保存：</b>四部分填写内容、关键决定记录、材料引用、分工，以及当时的作品信息</div>
+      <div><b>不保存：</b>个人任务作答（属于个人，不冻结进小组展示版）</div>
+    </div>
+    <p class="hint">展示版保存后只读，后续编辑继续在工作稿里进行。源代码或作品文件请另存对应版本，只保存一个可变的线上链接不能保证还原展示时的作品。</p>
+    ${db.snaps.length ? `<h3 style="font-size:16px;margin:14px 0 6px">已保存的展示版</h3>
+      ${db.snaps.map(s => `<div class="mat"><span class="tag mut">${esc(s.code)}</span>
+        <span class="end">平台版本 ${esc(s.platformVersion)} · ${esc(fmtTime(s.at))} · ${esc(s.by)}</span>
+        <button class="btn ghost" data-view-snap="${esc(s.code)}">只读查看</button>
+        <button class="btn ghost" data-act="export-dialog" data-src="${esc(s.code)}">导出这一版</button></div>`).join('')}` : ''}
+  </div>
+  <div class="ft"><span class="end"></span>
+    <button class="btn" data-act="close-modal">取消</button>
+    <button class="btn pri" data-act="snap-confirm">确认保存展示版</button></div>`;
+}
+function filledCount (secId) {
+  const s = CFG.sections.find(x => x.id === secId); let n = 0;
+  s.questions.forEach(q => (q.fields || []).forEach(f => { if (isFilled(q.id + '.' + f.key)) n += 1; }));
+  return n;
+}
+function snapshotView () {
+  const s = snapshotOf(ui.snapCode); if (!s) return workbenchView();
+  let inner = '';
+  RO = true;
+  const legacy = !s.promptSchemaVersion;
+  activeSnapLabels = legacy ? LABELS_V1 : null;
+  withData(s.data, () => { inner = tabs() + CFG.sections.map(sec =>
+    `<div ${sec.id === ui.section ? '' : 'hidden'}>${sec.questions.map(q => questionView(q)).join('')}</div>`).join(''); });
+  activeSnapLabels = null;
+  RO = false;
+  return header('ro') + `<main class="wrap">
+    <p><span class="ro-badge">展示版 ${esc(s.code)} · 只读</span>
+      <span class="hint">平台版本 ${esc(s.platformVersion)} · 保存于 ${esc(fmtTime(s.at))} · 成员 ${esc(s.members.join('、'))}</span>
+      <button class="btn sm" data-act="back-work">返回工作稿</button></p>
+    ${inner}</main>`;
+}
+function withData (data, fn) {
+  /* 个人作答不随展示版冻结：只换入小组内容 */
+  const keys = ['atoms', 'rows', 'cards', 'materials', 'refs', 'decisions'], backup = {};
+  keys.forEach(k => backup[k] = db[k]);
+  keys.forEach(k => db[k] = JSON.parse(JSON.stringify(data[k] == null ? blankDb()[k] : data[k])));
+  try { fn(); } finally { keys.forEach(k => db[k] = backup[k]); }
+}
+
+/* ---------- 导出弹窗 ---------- */
+function exportDialog (pre) {
+  if (pre) ui.exportSrc = pre;
+  return `<h2>导出</h2><div class="bd">
+    <div class="two">
+      <div class="f"><label>导出哪一份</label>
+        <select id="export-src">
+          <option value="draft" ${ui.exportSrc === 'draft' ? 'selected' : ''}>当前工作稿</option>
+          ${db.snaps.map(s => `<option value="${esc(s.code)}" ${ui.exportSrc === s.code ? 'selected' : ''}>展示版 ${esc(s.code)}（平台版本 ${esc(s.platformVersion)}）</option>`).join('')}
+        </select></div>
+      <div class="f"><label>格式</label><div class="seg" role="group" aria-label="导出格式">
+        <button data-fmt="md" aria-pressed="${ui.exportFmt === 'md'}">Markdown</button>
+        <button data-fmt="json" aria-pressed="${ui.exportFmt === 'json'}">JSON</button></div>
+        <div class="hint">两种格式读取同一份已保存内容，不分别生成答案。</div></div>
+    </div>
+    <div class="f"><label for="export-prev">导出内容预览</label></div>
+    <pre id="export-prev">${esc(previewExport())}</pre>
+  </div>
+  <div class="ft"><span class="end hint">导出含空值（显示未填写）、版本、材料关系、关键决定与个人作答、实际可提供的编辑记录，不由AI补齐内容</span>
+    <button class="btn" data-act="close-modal">关闭</button>
+    <button class="btn" data-act="copy-export">复制</button>
+    <button class="btn pri" data-act="download-export">下载文件</button></div>`;
+}
+function previewExport () {
+  const t = exportText(ui.exportSrc, ui.exportFmt);
+  return t.length > 2600 ? t.slice(0, 2600) + '\n\n……（预览截断，下载与复制为完整内容）' : t;
+}
+
+/* ---------- 教师端 ---------- */
+function teacherGroupsView () {
+  const liveNo = db.group.assigned ? db.group.groupNo : '';
+  const liveCls = db.group.assigned ? db.group.className : '';
+  const classSection = cn => {
+    const roster = classRoster(cn);
+    const groups = Object.keys(roster);
+    return `<h2 style="font-size:17px;margin:20px 0 8px">${esc(cn)}（${groups.length} 组 ${classHeadCount(cn)} 人）</h2>
+    <div class="glist">
+      ${groups.map(gn => {
+        const live = gn === liveNo && cn === liveCls;
+        return `<div class="gitem"><b>${esc(gn)}</b>
+          <span class="sm">${esc(classDomainOf(cn, gn))} · ${roster[gn].length} 人 · ${esc(roster[gn].join('、'))}</span>
+          ${live ? `<span class="sm">${esc(get('project.platform_name') || '未填平台名称')} · ${esc(get('project.subject') || '学科与教材未填')}</span>
+            <span class="tag s3">有内容</span><span class="end"></span>
+            <button class="btn sm" data-act="t-open" data-g="${esc(gn)}">查看工作台</button>
+            <button class="btn sm" data-act="t-snaps" data-g="${esc(gn)}">展示版（${db.snaps.length}）</button>`
+                : `<span class="tag none">无数据</span><span class="end"></span>
+                   <span class="sm">${liveNo ? '本机只登记了 ' + esc(liveCls) + ' ' + esc(liveNo) + ' 的内容' : '这台电脑还没有小组登录过'}</span>`}</div>`;
+      }).join('')}
+    </div>`;
+  };
+  return header('list') + `<main class="wrap"><h1 class="pg">教师端</h1>
+    <p class="hint">${CLASS_NAMES.length} 个班，共 ${CLASS_NAMES.reduce((n, cn) => n + Object.keys(classRoster(cn)).length, 0)} 组 ${headCount()} 人。</p>
+    ${CLASS_NAMES.map(classSection).join('')}
+    ${ui.showSnaps ? `<h2 style="font-size:17px;margin:20px 0 8px">已保存的展示版</h2>
+      ${db.snaps.length ? db.snaps.map(s => `<div class="gitem"><b>${esc(s.code)}</b><span class="sm">平台版本 ${esc(s.platformVersion)} · ${esc(fmtTime(s.at))} · ${esc(s.by)}</span>
+        <span class="end"></span><button class="btn sm" data-view-snap="${esc(s.code)}">只读查看</button>
+        <button class="btn sm" data-act="export-dialog" data-src="${esc(s.code)}">导出</button></div>`).join('') : emptyState('尚未保存展示版')}` : ''}
+  </main>`;
+}
+function teacherGroupView () {
+  RO = true;
+  const body = projectBar() + tabs() + sectionBody();
+  RO = false;
+  return header('ro') + `<main class="wrap">
+    <p><span class="ro-badge">教师视图 · 学生内容只读</span>
+      <span class="hint">可查看与评论，不以学生身份修改内容</span>
+      <button class="btn sm" data-act="t-back">返回小组列表</button></p>
+    ${body}</main>`;
+}
+/* ---------- 个人任务：只列当前开放的任务、简短说明和作答框（04 §六） ---------- */
+function personalView () {
+  const ts = openPersonalTasks(), wt = waitingPersonalTasks();
+  return header() + `<main class="wrap">
+    <h1 class="pg">个人任务</h1>
+    ${ts.length ? ts.map(taskCard).join('') : `<section class="q">
+      ${emptyState('现在没有开放中的个人任务', wt.length ? '有 ' + wt.length + ' 次登记了但还没到开放时间。' : '教师端本机还没有相关登记。')}
+    </section>`}
+  </main>`;
+}
+function taskCard (m) {
+  const rec = myPersonal(m.id)[0] || {}, dr = ui.decDraft['@' + m.id] || {}, k = esc(m.id);
+  const cur = (f, saved) => (dr[f] !== undefined ? dr[f] : (saved || ''));
+  const sel = (id, field, list, v) => `<select id="${id}" data-dc="@${k}|${field}">${list.map(o =>
+      `<option value="${esc(o)}" ${v === o ? 'selected' : ''}>${esc(o || '请选择')}</option>`).join('')}</select>`;
+  const fact = (l, v) => `<span>${esc(l)} <b>${esc(v || '教师端未登记')}</b></span>`;
+  return `<div class="ptask">
+    <div class="hd">${esc(m.name || '未命名测量')}<span class="tag mut">${esc(m.id)}</span>
+      ${rec.id ? `<span class="tag ${rec.state === '已提交作答' ? 'ok' : rec.state === '技术中断' ? 's1' : 's0'}">${esc(rec.state || '状态未选')}</span>`
+               : '<span class="tag none">本机尚未保存作答</span>'}</div>
+    <div class="facts">${fact('题目与版本', m.ver)}${fact('时点类型', m.when)}${fact('形式', m.kind)}
+      ${fact('开放时间', m.open_at)}${fact('预计用时', m.limit)}${fact('允许工具', m.tools)}${fact('独立作答', m.solo)}</div>
+    <div class="f"><label for="pa-${k}">你的作答</label>
+      <textarea id="pa-${k}" data-dc="@${k}|answer" rows="5" placeholder="按任务单作答。这里只存文本；纸质或截图作答请在任务单材料里挂，并在此写明位置">${esc(cur('answer', rec.answer))}</textarea>
+      <div class="hint">${m.rubric ? '评价标准：' + esc(m.rubric) + '。' : '教师端未登记评价标准。'}${
+        m.score_src ? '评分来源：' + esc(m.score_src) + '。' : ''}</div></div>
+    <div class="two">
+      <div class="f"><label for="ps-${k}">作答状态</label>
+        ${sel('ps-' + k, 'state', PSTATE, cur('state', rec.state))}
+        <div class="hint">未提交、技术中断、有效作答分开记，不按状态折算分数。</div></div>
+      <div class="f"><label for="pn-${k}">中断或未提交的情况（选填）</label>
+        <input type="text" id="pn-${k}" data-dc="@${k}|note" value="${esc(cur('note', rec.note))}" placeholder="补充说明（选填）"></div>
+      <div class="f"><label for="pg-${k}">这次实际是怎样完成的</label>
+        ${sel('pg-' + k, 'solo_self', SOLO_SELF, cur('solo_self', rec.solo_self))}
+        <div class="hint">与教师端的约定不一致时，两边都会显示。</div></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn pri" data-act="pers-save" data-m="${k}">保存作答（本机）</button>
+      <span class="hint">${rec.id ? esc(rec.id) + ' · 记于 ' + esc(fmtTime(rec.at)) + ' · 最后更新 ' + esc(fmtTime(rec.updated_at))
+        + (rec.sent_at ? ' · ' + (rec.state === '已提交作答' ? '标记已提交于 ' : '曾标记提交于 ') + esc(fmtTime(rec.sent_at)) : '')
+        : '保存后随「导出」一起提供，教师端只读引用'}</span>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   导出层：Markdown 与 JSON 读取同一份已保存内容
+   ============================================================ */
+const val = k => { const t = String(get(k)).trim(); return t || NODATA; };
+const valOr = (k, alt) => { const t = String(get(k)).trim(); return t || (alt || NODATA); };
+const zhOpt = (f, v) => { const o = (f.options || []).find(x => x.v === v); return o ? o.l : (v || NODATA); };
+
+function exportText (src, fmt) {
+  const snap = src === 'draft' ? null : snapshotOf(src);
+  let out = '';
+  const legacy = snap && !snap.promptSchemaVersion;
+  activeSnapLabels = legacy ? LABELS_V1 : null;
+  withData(snap ? snap.data : { atoms:db.atoms, rows:db.rows, cards:db.cards, materials:db.materials,
+                               refs:db.refs, decisions:db.decisions }, () => {
+    out = fmt === 'json' ? jsonOut(snap) : mdOut(snap);
+  });
+  activeSnapLabels = null;
+  return out;
+}
+function sourceLine (snap) {
+  return snap ? `展示版 ${snap.code}（平台版本 ${snap.platformVersion}，保存于 ${fmtTime(snap.at)}）` : '当前工作稿（未保存为展示版的实时内容）';
+}
+function projVal (k) { return val('project.' + k); }
+
+function mdOut (snap) {
+  const L = [];
+  L.push('# 第三周小组平台开发工作台 · 导出');
+  L.push('');
+  L.push(`- 导出内容：${sourceLine(snap)}`);
+  L.push('- 数据性质：本机浏览器中实际填写的内容');
+  L.push('- 记录人：本机互动码下自选的姓名，未经服务端认证，按未验证身份对待');
+  L.push('- 教师端入口靠本机管理密码，文件被复制后这道门不成立');
+  L.push(`- 导出时间：${fmtTime(now())}`);
+  L.push(`- 实践对应：${CFG.sections.map(s => s.label + '＝' + CFG.practice[s.id]).join('；')}`);
+  L.push('');
+  L.push('## 小组与作品信息');
+  CFG.project.forEach(f => L.push(`- ${f.label}：${f.control === 'members' ? members().join('、') : projVal(f.key)}`));
+  L.push('');
+  CFG.sections.forEach(sec => {
+    L.push(`## 部分 ${sec.label}（${CFG.practice[sec.id]}）`);
+    L.push('');
+    sec.questions.forEach(q => {
+      L.push(`### ${qLabel(q)}`);
+      if (q.control === 'cards') {
+        const list = cardsOf(q.store);
+        if (!list.length) { L.push(''); L.push('（本部分尚未添加记录）'); L.push(''); return; }
+        list.forEach(id => {
+          const key = q.store + '.' + id;
+          L.push('');
+          q.fields.forEach(f => {
+            const k = key + '.' + f.key;
+            let shown;
+            if (f.control === 'select') shown = f.noDefault && !get(k) ? NODATA + '（未选择）' : zhOpt(f, get(k));
+            else if (f.key === 'status') shown = valOr(k, NODATA + '（学生自报，不代表测试结论）');
+            else shown = val(k);
+            L.push(`- ${fLabel(q, f)}：${shown}`);
+          });
+          L.push(`- ${q.store === 'functions' ? '功能编号' : '检查编号'}：${id}（平台生成）`);
+          L.push(`- 关联材料：${refLine(key)}`);
+          if (q.store === 'functions') L.push('- 测试结论：本条功能记录不提供测试结论，检查结果见「检查改进」');
+          if (q.store === 'checks') L.push('- 说明：检查记录独立于功能进度，「已做出」不等于测试通过');
+        });
+        L.push('');
+        return;
+      }
+      (q.fields || []).forEach(f => {
+        if (f.control === 'rows') {
+          const rows = db.rows[q.id + '.' + f.key] || [];
+          L.push('');
+          if (!rows.length) { L.push(`- ${fLabel(q, f) || '（增行记录）'}：${NODATA}`); L.push(''); return; }
+          L.push(`**${f.cols.map(c => c.l).join(' ｜ ')}**`);
+          rows.forEach((r, i) => L.push(`${i + 1}. ${f.cols.map(c => val(cellKey(q.id + '.' + f.key, r._id, c.k))).join(' ｜ ')}`));
+          L.push('');
+          return;
+        }
+        const k = q.id + '.' + f.key;
+        let shown = f.control === 'select' ? (f.noDefault && !get(k) ? NODATA : zhOpt(f, get(k)))
+                : f.control === 'link_select' ? (get(k) ? get(k).split('、').map(cardLabelOf).join('；') : NODATA)
+                : val(k);
+        if (f.control === 'select' && !f.noDefault && !get(k)) shown = NODATA;
+        L.push(`- ${fLabel(q, f)}${f.optional ? '（选填）' : ''}：${shown}`);
+      });
+      L.push(`- 关联材料：${refLine(q.id)}`);
+      const cs = commentsOf(q.id);
+      if (cs.length) { L.push(`- 讨论记录：${cs.length} 条（见文末）`); }
+      L.push('');
+    });
+  });
+  L.push('## 关键决定记录');
+  if (!db.decisions.length) L.push('- 本窗口尚未记录关键决定。上面「设计功能」里的第 6 题只收一条典型决定，逐条记录请点各处的「记录这次决定」。');
+  db.decisions.forEach(x => {
+    L.push('');
+    L.push(`### ${x.id}｜记在：${x.target_label}`);
+    L.push(`- 遇到了什么问题：${x.problem || NODATA}`);
+    L.push(`- 最后决定怎样做：${x.decision || NODATA}`);
+    L.push(`- 依据是什么：${x.reason || NODATA}`);
+    L.push(`- 依据来自：${(x.sources || []).join('；') || NODATA}`);
+    L.push(`- 当时还考虑过：${x.alternates || NODATA}`);
+    L.push(`- 参与这次决定的人：${(x.participants || []).join('、') || NODATA}`);
+    L.push(`- 打算怎么看出这个决定好不好：${x.check_plan || NODATA}`);
+    L.push(`- 事件时间：${x.event_at || NODATA}｜记录时间：${fmtTime(x.at)}｜${decTiming(x).state}`);
+    L.push(`- 谁记的：${x.by}｜来源：${x.src}｜窗口：${x.win}`);
+  });
+  if ((db.legacyDecisions || []).length)
+    L.push('', `- 本机另有 ${db.legacyDecisions.length} 条早期版本留下的决定记录，字段结构与现在不同、无法挂到具体位置，因此没有列在上面，也不进展示版；需要清掉请用「清空本机内容」。`);
+  L.push('');
+  L.push('## 个人任务作答');
+  L.push('- 个人作答属于个人：不冻结进小组展示版，本导出一律取本机当前记录。');
+  if (!db.personal.length) L.push('- 本机没有个人作答记录。教师端「个人测量」里开放时间已到、挂靠本任务的测量才会出现在个人任务入口。');
+  db.personal.forEach(p => {
+    L.push('');
+    L.push(`### ${p.id}｜${p.msr_name}（教师端登记 ${p.msr}）`);
+    L.push(`- 谁写的：${p.by}｜作答状态：${p.state || '未选择'}｜实际完成方式：${p.solo_self || NODATA}`);
+    L.push(`- 中断或未提交的情况：${p.note || NODATA}`);
+    L.push(`- 记于：${fmtTime(p.at)}｜最后更新：${fmtTime(p.updated_at || p.at)}｜标记提交：${
+      p.sent_at ? fmtTime(p.sent_at) + (p.state === '已提交作答' ? '（与当前状态一致）' : '（当前状态已改为' + (p.state || '未选择') + '）') : '未标记'}`);
+    L.push('- 作答原文：');
+    L.push(...String(p.answer || NODATA).split('\n').map(x => '    ' + x));
+  });
+  L.push('');
+  L.push('## 材料索引');
+  if (!db.materials.length) L.push('（本组尚未添加材料）');
+  db.materials.forEach(m => {
+    const used = Object.keys(db.refs).filter(t => (db.refs[t] || []).includes(m.id)).map(t => labelOf(t));
+    L.push(`- ${m.id}｜${m.kind === 'file' ? '文件' : m.kind === 'link' ? '链接' : '粘贴片段'}｜${matName(m)}`);
+    L.push(`  - 定位：${m.loc || NODATA}｜添加：${m.by} ${fmtTime(m.at)}｜文本提取：${m.extracted ? '已提取，正文随导出包提供' : '未提取'}`);
+    L.push(`  - 被引用于：${used.length ? used.join('；') : NODATA}`);
+  });
+  L.push('');
+  const withText = db.materials.filter(m => m.text);
+  if (withText.length) {
+    L.push('## 材料正文（已提取文本，随本导出包提供）');
+    withText.forEach(m => {
+      L.push('');
+      L.push(`### ${m.id}｜${m.kind === 'file' ? '文件' : '粘贴片段'}｜${matName(m)}`);
+      L.push(...m.text.split('\n').map(l => '    ' + l));
+    });
+    L.push('');
+  }
+  L.push('## 展示版记录');
+  if (db.snaps.length) db.snaps.forEach(s => L.push(`- ${s.code}｜平台版本 ${s.platformVersion}｜${fmtTime(s.at)}｜${s.by}`));
+  else L.push('- 尚未保存展示版');
+  L.push('');
+  L.push('## 编辑与提交记录（系统实际捕获到的行为）');
+  if (snap) L.push('- 本导出取自展示版快照；快照不单独保存逐条编辑时间线，下面列出的是本机工作稿当前保留的编辑记录。');
+  L.push('');
+  L.push('- 分工与讨论分开记录：认领人不等于实际编辑人，讨论参与者单独保留。');
+  L.push('- 以下条目按题目汇总最近编辑，仅说明系统捕获到的行为，不按字数或编辑次数折算个人贡献。');
+  const byTarget = {};
+  db.revisions.forEach(r => { (byTarget[r.label] || (byTarget[r.label] = [])).push(r); });
+  Object.entries(byTarget).slice(0, 60).forEach(([lab, rs]) => {
+    L.push(`  - ${lab}：最近 ${fmtTime(rs[0].at)}由 ${rs[0].by} 编辑，共记录 ${rs.length} 次改动`);
+  });
+  L.push('');
+  L.push('## 操作记录');
+  if (db.activity.length) db.activity.slice(0, 60).forEach(a => L.push(`- ${fmtTime(a.at)} ${a.by}：${a.text}`));
+  else L.push('- 无');
+  L.push('');
+  L.push('## 讨论与留言');
+  if (db.comments.length) db.comments.forEach(c => L.push(`- ${c.target && QINDEX[c.target] ? qLabel(QINDEX[c.target].q) : labelOf(c.target || '')}${c.replyTo ? '（回复）' : ''}｜${c.by}｜${fmtTime(c.at)}｜${c.text}`));
+  else L.push('- 无');
+  L.push('');
+  L.push('## 导出说明');
+  L.push('- 空内容一律保留为「未填写」，不由平台或AI补齐。');
+  L.push('- 学生自报的开发进度与检查结果分开保存：「已做出」不自动生成测试通过结论。');
+  L.push('- 外部链接不一定能被另一个AI读取；本包仅在标注「已提取」时附带文本，其余只提供名称与定位。');
+  L.push('- 未随包提供或未提取文本的材料，本导出不声称已核验其内容。');
+  L.push('- 字段编号（如 F01、T01、S01）与框架对应关系由平台维护，学生无需手工编号。');
+  return mdJoin(L);
+}
+/* 学生原文可能含换行：续行统一缩进，避免被读成新的导出条目 */
+function mdJoin (L) {
+  const out = [];
+  L.forEach(x => {
+    if (x === '') { if (out.length && out[out.length - 1] !== '') out.push(''); return; }
+    out.push(x.indexOf('\n') < 0 ? x : x.replace(/\n/g, '\n    '));
+  });
+  return out.join('\n');
+}
+function refLine (target) {
+  const r = refsOf(target);
+  return r.length ? r.map(id => { const m = db.materials.find(x => x.id === id); return id + (m ? '（' + matName(m) + '）' : ''); }).join('；') : '尚未添加';
+}
+
+function jsonOut (snap) {
+  const body = {
+    schema:'v16-week3-workbench',
+    source: snap ? { type:'exhibition_snapshot', code:snap.code, savedAt:fmtTime(snap.at) } : { type:'working_draft' },
+    dataNature: '本机浏览器中实际填写的内容',
+    platformVersion: snap ? snap.platformVersion : valOr('project.platform_version'),
+    exportedAt:fmtTime(now()),
+    group:{ name:db.group.name, className:db.group.className, groupNo:db.group.groupNo, members:members(), visibility:db.group.visibility },
+    project:Object.fromEntries(CFG.project.map(f => [f.key, f.control === 'members' ? members() : val('project.' + f.key)])),
+    practiceMap:CFG.practice,
+    sections:CFG.sections.map(sec => ({ id:sec.id, label:sec.label, practice:CFG.practice[sec.id],
+      questions:sec.questions.map(q => q.control === 'cards'
+        ? { id:q.id, label:qLabel(q), kind:'records', store:q.store,
+            records:cardsOf(q.store).map(id2 => Object.assign({ recordId:id2 },
+              Object.fromEntries(q.fields.map(f => [f.key, f.control === 'select' ? (get(q.store + '.' + id2 + '.' + f.key) || null) : val(q.store + '.' + id2 + '.' + f.key)])),
+              { 关联材料:refsOf(q.store + '.' + id2), 说明:q.store === 'functions' ? '学生自报进度，不提供测试结论' : '检查记录独立于功能进度' })) }
+        : { id:q.id, label:qLabel(q), kind:'fields',
+            fields:(q.fields || []).map(f => f.control === 'rows'
+              ? { key:f.key, label:fLabel(q, f) || '增行记录', control:'rows',
+                  columns:f.cols.map(c => c.l),
+                  rows:(db.rows[q.id + '.' + f.key] || []).map(r => Object.fromEntries(f.cols.map(c => [c.k, val(cellKey(q.id + '.' + f.key, r._id, c.k))]))) }
+              : { key:f.key, label:fLabel(q, f), optional:!!f.optional,
+                  value:(f.control === 'select' || f.control === 'version_select') ? (get(q.id + '.' + f.key) || null) : val(q.id + '.' + f.key) }),
+            关联材料:refsOf(q.id) } ) })),
+    materials:db.materials.map(m => ({ id:m.id, kind:m.kind, name:matName(m), url:m.url || null, location:m.loc || null,
+      textExtracted:!!m.extracted, attachedWithPackage:!!m.extracted, addedBy:m.by, addedAt:fmtTime(m.at),
+      referencedBy:Object.keys(db.refs).filter(t => (db.refs[t] || []).includes(m.id)).map(labelOf) })),
+    snapshots:db.snaps.map(s => ({ code:s.code, platformVersion:s.platformVersion, at:fmtTime(s.at), by:s.by })),
+    decisions:db.decisions.map(d => ({ id:d.id, recordedTo:d.target_label, recordedToKey:d.target,
+      problem:d.problem || null, decision:d.decision || null, reason:d.reason || null,
+      evidenceSources:d.sources || [], consideredAlternative:d.alternates || null,
+      participants:d.participants || [], checkPlan:d.check_plan || null,
+      eventTime:d.event_at || null, eventTimeSource:d.event_at ? (d.src || '学生填写') : '未填写',
+      recordedTime:fmtTime(d.at), timingJudgement:decTiming(d).state,
+      by:d.by, source:d.src, window:d.win })),
+    ...( (db.legacyDecisions || []).length ? { legacyDecisions:{
+        count:db.legacyDecisions.length,
+        note:'早期版本本机存储留下的记录，字段结构与现在不同，无法挂到具体位置，因此不并入 decisions，也不进展示版',
+        raw:db.legacyDecisions } } : {} ),
+    personalAnswers:{ frozenWithSnapshot:false,
+      note:'个人作答属于个人，不冻结进小组展示版快照；本节点取自本机当前记录',
+      openTasks:openPersonalTasks().map(m => ({ measurement:m.id, name:m.name, instrument:m.ver || null,
+        whenType:m.when || null, openAt:m.open_at, limit:m.limit || null, tools:m.tools || null, solo:m.solo || null })),
+      records:db.personal.map(p => ({ id:p.id, measurement:p.msr, measurementName:p.msr_name, task:p.task,
+        by:p.by, state:p.state || null, answer:p.answer || null, interruptionNote:p.note || null,
+        howCompleted:p.solo_self || null, recordedAt:fmtTime(p.at), updatedAt:fmtTime(p.updated_at || p.at),
+        markedSubmittedAt:p.sent_at ? fmtTime(p.sent_at) : null,
+        stateMatchesSubmitMark:p.sent_at ? (p.state === '已提交作答') : null, source:p.src, window:p.win })) },
+    comments:db.comments.map(c => ({ target:labelOf(c.target || ''), by:c.by, at:fmtTime(c.at), replyTo:c.replyTo || null, text:c.text })),
+    editRecords:db.revisions.slice(0, 200).map(r => ({ where:r.label, by:r.by, at:fmtTime(r.at), before:r.prev, after:r.next, mergedKeystrokes:r.count || 1 })),
+    activity:db.activity.slice(0, 100).map(a => ({ by:a.by, at:fmtTime(a.at), text:a.text })),
+    notes:['空内容保留为「未填写」，不由AI补齐', '学生自报进度与检查结果分开', '未提取文本的材料不声称已核验',
+           '认领人、实际编辑人、讨论参与者分开记录', '记录只说明系统捕获的行为，不折算个人贡献分',
+           '关键决定由学生按位置逐条记录，平台不代写不补全，事件时间与记录时间分开保存',
+           '记录人是本机互动码下自选的姓名，未经服务端认证，研究数据中按未验证身份对待',
+           '教师端入口靠本机管理密码，文件被复制后这道门不成立',
+           '个人作答与记录按登录姓名分人；互动码只区分组与组，同组内的成员隔离仍未接入，需在真实部署中由服务端保证']
+  };
+  return JSON.stringify(body, null, 2);
+}
+function exportFileName (snap) {
+  const base = (get('project.platform_name') || db.group.name).replace(/[\\/:*?"<>|\s]+/g, '-').slice(0, 28);
+  return `${base}-第三周-${snap ? snap.code : '工作稿'}.${ui.exportFmt === 'json' ? 'json' : 'md'}`;
+}
+function doDownload () {
+  const snap = ui.exportSrc === 'draft' ? null : snapshotOf(ui.exportSrc);
+  const text = exportText(ui.exportSrc, ui.exportFmt);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type:'text/plain;charset=utf-8' }));
+  a.download = exportFileName(snap);
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  toast('已下载 ' + a.download);
+}
+/* ============================================================
+   弹窗
+   ============================================================ */
+function modalView () {
+  if (!ui.modal) return '';
+  const inner = ui.modal === 'snap' ? snapDialog()
+    : ui.modal === 'export' ? exportDialog()
+    : ui.modal === 'help' ? helpView()
+    : ui.modal === 'members' ? membersDialog() : '';
+  return `<div id="mask" role="dialog" aria-modal="true" aria-label="对话框"><div class="dlg">${inner}</div></div>`;
+}
+function membersDialog () {
+  return `<h2>调整小组成员与展示可见范围</h2><div class="bd">
+    <div class="f"><label for="mem-in">小组成员（用顿号分隔）</label>
+      <input type="text" id="mem-in" value="${esc(members().join('、'))}"></div>
+    <div class="f"><label for="vis-in">展示可见范围</label>
+      <select id="vis-in">${['仅本组可见', '仅教师与助教可见', '本班各组可见', '全班可见'].map(v =>
+        `<option ${db.group.visibility === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
+    <p class="hint">可见范围是记录下来的约定。</p>
+    <p class="hint">名单改动不会替换当前登录人；同学不在这组里时，让他退出后用自己的名字重新登录。</p>
+  </div><div class="ft"><span class="end"></span>
+    <button class="btn" data-act="close-modal">取消</button>
+    <button class="btn pri" data-act="save-members">保存</button></div>`;
+}
+let toastTimer = null;
+function toast (msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.hidden = false; clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+
+/* ============================================================
+   事件
+   ============================================================ */
+/* 输入只写数据、不整页重渲染，避免打断光标 */
+document.addEventListener('input', e => {
+  const el = e.target, dc = el.dataset && el.dataset.dc;
+  /* 互动码：一位一格，输满自动跳到下一格，不参与数据写入 */
+  if (el.classList && el.classList.contains('code')) {
+    el.value = el.value.replace(/\s/g, '').slice(-1);
+    if (el.value) { const box = el.closest('.codes'), all = box ? [...box.querySelectorAll('input')] : [];
+      const i = all.indexOf(el); if (i >= 0 && i < all.length - 1) all[i + 1].focus(); }
+    return;
+  }
+  /* 决定记录与个人作答：未提交的内容先暂存在内存，重渲染后回填 */
+  if (dc) {
+    const i = dc.indexOf('|'), k = dc.slice(0, i), f = dc.slice(i + 1);
+    (ui.decDraft[k] || (ui.decDraft[k] = {}))[f] = el.value;
+    if (el.tagName === 'TEXTAREA') { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight + 2, 520) + 'px'; }
+    return;
+  }
+  const k = el.dataset && el.dataset.k;
+  if (!k) return;
+  if (teacherMode() || !ME) return;                     // 教师通道与未登录都不改学生内容
+  myDraft = el.value;
+  put(k, el.value);
+  if (el.tagName === 'TEXTAREA') { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight + 2, 520) + 'px'; }
+  syncSummary(k);
+});
+document.addEventListener('focusin', e => {
+  const k = e.target && e.target.dataset && e.target.dataset.k;
+  if (!k) return;
+  focusKey = k; focusAt = now(); myDraft = get(k); announce(k);
+});
+document.addEventListener('focusout', e => {
+  const k = e.target && e.target.dataset && e.target.dataset.k;
+  if (k && k === focusKey) { focusKey = null; if (!conflicts[k]) snapshotBeforeRemote[k] = db.atoms[k]; }
+});
+/* 卡片摘要随输入更新 */
+function syncSummary (key) {
+  const p = parseKey(key);
+  if (p.type !== 'card') return;
+  const d = document.querySelector(`details[data-toggle="${p.store}.${p.id}"] > summary`);
+  if (!d) return;
+  const q = storeCfg(p.store);
+  d.innerHTML = summaryChips(q, p.id) + '<span class="end"></span>';
+}
+/* 下拉与勾选需要重渲染（影响禁用态、摘要与选项） */
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'export-src') { ui.exportSrc = el.value; render(); return; }
+  if (teacherMode() || !ME) return;                     // 只有登录的学生本人能改内容
+  if (el.dataset.dc) {
+    const i = el.dataset.dc.indexOf('|'), k = el.dataset.dc.slice(0, i), f = el.dataset.dc.slice(i + 1);
+    (ui.decDraft[k] || (ui.decDraft[k] = {}))[f] = el.value; return;
+  }
+  if (el.dataset.dcGroup) {
+    const kind = el.dataset.dcKind, box = document.getElementById('dc-' + kind);
+    const arr = box ? [...box.querySelectorAll('input:checked')].map(x => x.value) : [];
+    const dr = ui.decDraft[el.dataset.dcGroup] || (ui.decDraft[el.dataset.dcGroup] = {});
+    dr[kind === 'src' ? 'sources' : 'participants'] = arr; return;
+  }
+  if (el.dataset.k) {
+    const k = el.dataset.k, p = parseKey(k);
+    /* 检查状态与已有实际结果矛盾 → 先问学生，不静默删除 */
+    if (p.type === 'card' && p.field === 'result' && el.value === 'not_tested' && get(p.store + '.' + p.id + '.actual').trim()) {
+      pendingResult[p.store + '.' + p.id] = { from:get(k), to:'not_tested' };
+      db.atoms[k] = { text:get(k), by:ME, at:now() };        // 保持原值，等学生选择
+      render(); return;
+    }
+    put(k, el.value, { source:'选择' });
+    render(); return;
+  }
+  if (el.dataset.link) {
+    const key = el.dataset.link;
+    const cur = new Set(get(key) ? get(key).split('、').filter(Boolean) : []);
+    el.checked ? cur.add(el.dataset.t) : cur.delete(el.dataset.t);
+    put(key, [...cur].join('、')); return;
+  }
+  if (el.dataset.mat === 'file') { handleFile(el); return; }
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('button, a[data], [data-act], [data-panel], [data-add-row], [data-del-row], [data-add-card], [data-del-card], [data-view-snap], [data-res], [data-res-result], [data-reply], [data-mat], [data-fmt], [data-sec]');
+  if (!b) return;
+  const d = b.dataset;
+  /* 入口：选门 → 选班级 → 互动码 → 选名字 ／教师门（管理密码） */
+  if (d.act === 'enter-student') { ui.login = {}; writeSess({ door:'student' }); render(); return; }
+  if (d.act === 'enter-teacher') { ui.login = {}; writeSess({ door:'teacher' }); render(); return; }
+  if (d.act === 'back-door') { ui.login = {}; clearSess(); render(); return; }
+  if (d.act === 'pick-class') { ui.login.cls = d.cls; render(); return; }
+  if (d.act === 'check-join') {
+    const a = readCode('c1');
+    const cls = ui.login.cls || '';
+    if (a.length < CODE_LEN) { ui.login = { cls, err:'请填写完整的 4 位互动码' }; render(); return; }
+    if (!checkJoin(a, cls)) { ui.login = { cls, err:'互动码不正确，请向教师确认后重试' }; render(); return; }
+    ui.login = { cls }; sessCodeOk(cls); render(); return;
+  }
+  if (d.act === 'set-pass') {
+    const a = pwVal('p1'), b = pwVal('p2');
+    if (!a.trim()) { ui.login = { err:'请设置管理密码' }; render(); return; }
+    if (a !== b) { ui.login = { err:'两次输入的密码不一致' }; render(); return; }
+    setPass(a); ui.login = {}; loginTeacher(); render(); toast('已进入教师端'); return;
+  }
+  if (d.act === 'check-pass') {
+    /* 只回「密码错误」，不告诉对方这台机器有没有设过 */
+    if (!checkPass(pwVal('p1'))) { ui.login = { err:'密码错误' }; render(); return; }
+    ui.login = {}; loginTeacher(); render(); return;
+  }
+  if (d.act === 'choose-name') {
+    const mg = machineGroup();
+    const info = groupOf(d.name);
+    if (mg && (!info || info.group !== mg)) return;                // 不是这台电脑的组
+    ui.login = {}; if (!loginStudent(d.name)) return;
+    render(); toast('你好，' + ME); return;
+  }
+  if (d.act === 'logout') { logout(); render(); return; }
+  if (!ME && !teacherMode()) return;                    // 没进门不进入任何内容视图
+  if (RO && (d.addRow || d.delRow || d.addCard || d.delCard)) return;   // 只读视图不改学生内容
+
+  if (d.sec) { ui.section = d.sec; ui.panel = null; render(); document.querySelector('.wrap').scrollIntoView({ block:'start' }); return; }
+  if (d.panel) { const [kind, target] = d.panel.split(':');
+    ui.panel = (ui.panel && ui.panel.target === target && ui.panel.kind === kind) ? null : { kind, target }; render(); return; }
+  if (d.addRow) { addRow(d.addRow); render(); return; }
+  if (d.delRow) { delRow(d.delRow, +d.id); render(); return; }
+  if (d.addCard) { const id = addCard(d.addCard); ui.closed[d.addCard + '.' + id] = false; ui.panel = null; render();
+    setTimeout(() => { const el = document.getElementById(kid(d.addCard + '.' + id + '.name')); if (el) el.focus(); }, 0); return; }
+  if (d.delCard) { if (confirm('删除 ' + d.id + ' 这条记录？删除历史会保留在修改记录里。')) { delCard(d.delCard, d.id); render(); } return; }
+  if (d.viewSnap) { ui.snapCode = d.viewSnap; ui.view = 'snapshot'; ui.modal = null; ui.panel = null; render(); return; }
+  if (d.res) { resolveConflict(d.k, d.res); return; }
+  if (d.resResult) { applyResultChoice(d.store, d.id, d.resResult); return; }
+  if (d.reply) { const el = document.getElementById('cmt-in');
+    if (el) { el.dataset.reply = d.reply; el.placeholder = '正在回复上面这条评论'; el.focus(); toast('正在回复一条评论，发布后自动恢复'); } return; }
+  if (d.fmt) { ui.exportFmt = d.fmt; render(); return; }
+  if (d.mat === 'add-link') { addLinkMat(b); return; }
+  if (d.mat === 'add-paste') { addPasteMat(d.t); return; }
+  if (d.mat === 'reuse') { const sel = document.getElementById('mr-' + d.t); if (sel) attachMat(d.t, sel.value); render(); return; }
+  if (d.mat === 'detach') { detachMat(d.t, d.s); render(); return; }
+
+  switch (d.act) {
+    case 'open-work': {
+      const url = get('project.entry_url').trim();
+      if (!url) { ui.projOpen = true; ui.modal = null; render();
+        const el = document.getElementById(kid('project.entry_url')); if (el) el.focus();
+        toast('还没有填写作品入口，先补充入口链接或相关材料'); break; }
+      window.open(url, '_blank', 'noopener'); break; }
+    case 'snap-dialog': ui.modal = 'snap'; render(); break;
+    case 'export-dialog': ui.exportSrc = d.src || (ui.exportSrc || 'draft'); ui.modal = 'export'; render(); break;
+    case 'retry-save': { const ok = save(); if (!ok) toast('仍然保存失败，请先用「导出」把内容留底'); break; }
+    case 'snap-confirm': { const s = makeSnapshot(); ui.modal = null; render(); toast('已保存展示版 ' + s.code + '，可只读查看'); break; }
+    case 'close-modal': ui.modal = null; render(); break;
+    case 'copy-export': {
+      const text = exportText(ui.exportSrc, ui.exportFmt);
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+        .then(() => toast('已复制完整导出内容（' + text.length + ' 字）'))
+        .catch(() => { const ta = document.getElementById('export-prev');
+          alert('浏览器未授权剪贴板，请在预览框中全选复制，或改用下载。'); }); break; }
+    case 'download-export': doDownload(); break;
+    case 'help': ui.modal = 'help'; render(); break;
+    case 'back-work': ui.view = isTeacher() ? 'teacherGroup' : 'workbench'; render(); break;
+    case 't-open': ui.view = 'teacherGroup'; render(); break;
+    case 't-back': ui.view = 'teacherGroups'; ui.showSnaps = false; render(); break;
+    case 't-snaps': ui.showSnaps = !ui.showSnaps; render(); break;
+    case 'edit-members': ui.modal = 'members'; render(); break;
+    case 'save-members': {
+      const inp = document.getElementById('mem-in'), vis = document.getElementById('vis-in');
+      const list = inp.value.split(/[、,，\s]+/).filter(Boolean);
+      if (list.length) { db.group.members = list;
+        logActivity('调整小组成员为 ' + list.join('、')); }
+      db.group.visibility = vis.value; logActivity('设置展示可见范围为「' + vis.value + '」');
+      save(); ui.modal = null; render(); toast('已更新成员与可见范围'); break; }
+    case 'say': {
+      const inp = document.getElementById('cmt-in');
+      if (!inp || !inp.value.trim()) { toast('请先写下讨论内容'); break; }
+      addComment(d.t || (inp.dataset.t || ''), inp.value, inp.dataset.reply);
+      inp.dataset.reply = ''; render(); break; }
+    case 'dec-save': {
+      const t = d.t, v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+      const picked = kind => [...document.querySelectorAll('#dc-' + kind + ' input:checked')].map(x => x.value);
+      const r = addDecision(t, { problem:v('dc-problem'), decision:v('dc-decision'), reason:v('dc-reason'),
+        alternates:v('dc-alt'), check_plan:v('dc-check'), event_at:v('dc-event'),
+        sources:picked('src'), participants:picked('who') });
+      if (r.err) { toast(r.err); break; }
+      delete ui.decDraft[t]; render();
+      toast('已保存 ' + r.id + '，三问与依据来源已入库'); break; }
+    case 'dec-del':
+      if (confirm('删除 ' + d.id + ' 这条决定记录？操作记录里会留下删除动作。')) { delDecision(d.id); render(); } break;
+    case 'personal': ui.view = 'personal'; ui.panel = null; render(); break;
+    case 'personal-back': ui.view = 'workbench'; render(); break;
+    case 'pers-save': {
+      const m = openPersonalTasks().find(x => x.id === d.m);
+      if (!m) { toast('这次测量已不在开放列表里，作答没有改动'); break; }
+      const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+      const r = savePersonal(m, { answer:v('pa-' + d.m), state:v('ps-' + d.m), note:v('pn-' + d.m), solo_self:v('pg-' + d.m) });
+      if (r.err) { toast(r.err); break; }
+      delete ui.decDraft['@' + d.m]; render();
+      toast('已保存 ' + r.rec.id + '（' + (r.rec.state || '状态未选') + '）到本机本窗口'); break; }
+    case 'demo-clear': if (confirm('清空本机内容？展示版快照与编辑记录会一并删除。')) {
+        localStorage.removeItem(DB_KEY); db = blankDb(); logout(); sessCodeOk(machineClass() || '科教班');
+        applyProjectSeed(); snapshotBeforeRemote = JSON.parse(JSON.stringify(db.atoms));
+        ui.section = 'needs'; ui.panel = null; ui.decDraft = {}; save(); render(); toast('已清空，请重新选名字'); } break;
+    case 'join-save': {
+      const cls = d.cls || '科教班';
+      const c = readCode('j-' + cls);
+      if (c.length < CODE_LEN) { ui.login = { cls, err:'请填写完整的 4 位互动码' }; render(); break; }
+      setJoin(c, cls); ui.login = { cls }; render(); toast(cls + ' 互动码已更新为 ' + c); break; }
+  }
+});
+/* details 收起状态只记在内存，不入库 */
+document.addEventListener('toggle', e => {
+  const t = e.target;
+  if (t.classList && t.classList.contains('rec') && t.dataset.toggle) ui.closed[t.dataset.toggle] = !t.open;
+}, true);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.modal) { ui.modal = null; render(); }
+  if (e.key === 'Enter' && e.target && e.target.classList && (e.target.classList.contains('code') || e.target.classList.contains('pw'))) {
+    const go = document.querySelector('.gate .go'); if (go) { e.preventDefault(); go.click(); }
+  }
+});
+function applyResultChoice (store, id, how) {
+  const key = store + '.' + id, p = pendingResult[key]; if (!p) return;
+  if (how === 'cancel') { delete pendingResult[key]; render(); return; }
+  if (how === 'keep') { put(key + '.result', 'unmet', { source:'确认检查结果', resolve:true }); }
+  if (how === 'move') {
+    const actual = get(key + '.actual'), nextKey = key + '.next_action';
+    put(nextKey, (get(nextKey) ? get(nextKey) + '\n' : '') + '（由尚未测试的检查记录转入）' + actual, { source:'保留实际结果', resolve:true });
+    db.atoms[key + '.actual'] = { text:'', by:ME, at:now() };
+    db.revisions.unshift({ id:'R' + (++db.seq.R), key:key + '.actual', label:labelOf(key + '.actual'), prev:actual, next:'', by:ME, at:now(), count:1 });
+    put(key + '.result', 'not_tested', { source:'切换检查状态', resolve:true });
+  }
+  if (how === 'clear') {
+    const actual = get(key + '.actual');
+    db.atoms[key + '.actual'] = { text:'', by:ME, at:now() };
+    db.revisions.unshift({ id:'R' + (++db.seq.R), key:key + '.actual', label:labelOf(key + '.actual'), prev:actual, next:'', by:ME, at:now(), count:1 });
+    put(key + '.result', 'not_tested', { source:'切换检查状态', resolve:true });
+  }
+  delete pendingResult[key]; logActivity('处理检查状态与实际结果的矛盾：' + cardTitle(store, id));
+  save(); render();
+}
+function addLinkMat (btn) {
+  const inp = document.getElementById('ml-' + btn.dataset.t);
+  if (!inp || !inp.value.trim()) { toast('请先粘贴链接或位置'); return; }
+  attachMat(btn.dataset.t, addMaterial({ kind:'link', url:inp.value.trim(), name:inp.value.trim() }));
+  render();
+}
+function addPasteMat (t) {
+  const inp = document.getElementById('mp-' + t), loc = document.getElementById('mq-' + t);
+  if (!inp || !inp.value.trim()) { toast('请先粘贴原始片段'); return; }
+  const text = inp.value.trim();
+  attachMat(t, addMaterial({ kind:'paste', name:text.slice(0, 24) + '…', text,
+    loc:loc ? loc.value.trim() : '', extracted:true }));
+  render();
+}
+function handleFile (el) {
+  const f = el.files && el.files[0], t = el.dataset.t;
+  if (!f) return;
+  const isText = /\.(md|markdown|txt|json|csv)$/i.test(f.name);
+  if (isText && f.size < 400000) {
+    const r = new FileReader();
+    r.onload = () => { const sid = addMaterial({ kind:'file', name:f.name, text:String(r.result || '').slice(0, 60000), extracted:true });
+      attachMat(t, sid); render(); toast('已读取文本：' + f.name); };
+    r.onerror = () => toast('文件读取失败，可改为只记录文件名与位置');
+    r.readAsText(f);
+  } else {
+    const sid = addMaterial({ kind:'file', name:f.name, extracted:false,
+      loc:isText ? '超出 400KB，未提取文本' : '非文本文件，未提取文本' });
+    attachMat(t, sid); render();
+    toast('未上传文件本体，已记录文件名与定位；导出时会标注「未提取文本」');
+  }
+}
+
+
+/* ============================================================
+   启动
+   ============================================================ */
+/* 调试访问器：供验收自测核对协作状态（只读，不影响界面） */
+window.__dbg = () => ({ me:ME, tab:TAB, sess:readSess(), assigned:!!db.group.assigned,
+  groupNo:db.group.groupNo, joinFp:joinFp(), passSet:passState(), focusKey, conflicts:Object.keys(conflicts),
+  presence:freshPresence().map(p => p.by + '→' + p.key), rev:db._rev, snaps:db.snaps.length });
+
+function boot () {
+  localStorage.removeItem(ME_KEY);          // 旧版本把身份存在本机共享键里，界面自选身份已废除
+  /* 上一版「自设班级码」的校验值搬到互动码键，教师换过码的机器不丢 */
+  const oldClass = readDigest(CLASS_KEY);
+  if (oldClass && !readDigest(JOIN_KEY)) { localStorage.setItem(JOIN_KEY, JSON.stringify(oldClass)); }
+  localStorage.removeItem(CLASS_KEY);
+  const had = load();
+  if (!had) { db = blankDb(); save(true); }
+  applyProjectSeed();
+  /* 两扇门凭据层：教师门在管理密码被清掉时作废；学生门的互动码指纹对不上时作废 */
+  const s = readSess();
+  if (s.door === 'teacher' && !passState()) clearSess();
+  else if (s.code && s.jk !== joinFp()) clearSess();
+  snapshotBeforeRemote = JSON.parse(JSON.stringify(db.atoms));
+  applySess();
+  if (ME && db.group.assigned && groupOf(ME) !== db.group.groupNo) { sessCodeOk(); ME = ''; }
+  if (isTeacher() && ui.view === 'workbench') ui.view = 'teacherGroups';
+  render();
+  setSaveState('saved');
+}
+boot();
+/* 在线标记 9 秒过期：聚焦期间每 5 秒重新广播位置，并只刷新在线与冲突片段 */
+setInterval(() => { if (focusKey) announce(focusKey); refreshPresence(); }, 5000);
+/* 页面离开前把尚未落盘的输入写入；无改动时不回写，避免覆盖其他标签页的新内容 */
+window.addEventListener('beforeunload', () => { if (dirty) { clearTimeout(saveTimer); save(); } });
+</script>
+</body>
+</html>

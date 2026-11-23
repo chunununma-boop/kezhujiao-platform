@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>支点课堂 · 研究管理</title>
+<style>
+/* 令牌沿用 ClassNode 服务端下发的 --cn-* 变量，保证与教师控制台同一套视觉 */
+:root{
+  --cn-bg:#f4f6f8; --cn-surface:#ffffff; --cn-surface-subtle:#f8fafb; --cn-surface-muted:#edf2f6;
+  --cn-text:#26333f; --cn-text-muted:#657382; --cn-placeholder:#8b97a3;
+  --cn-primary:#466b8a; --cn-primary-hover:#3b5b76; --cn-primary-pressed:#304b62; --cn-primary-soft:#edf2f6;
+  --cn-border:#d8e1e8; --cn-border-strong:#b9c9d6; --cn-focus:rgba(70,107,138,.18);
+  --cn-success:#52745f; --cn-success-soft:#edf4ef; --cn-danger:#a95f58; --cn-danger-soft:#f9eeee;
+  --cn-reward:#966b34; --cn-reward-soft:#fbf3e6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cn-bg);color:var(--cn-text);
+  font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--cn-primary)}
+.shell{display:flex;min-height:100vh}
+
+/* 侧栏：展开 208px，收起 56px，与平台一致 */
+.side{width:208px;flex:none;background:#e0e3e8;padding:14px 8px 18px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;height:100vh;overflow:auto}
+.side.mini{width:56px;padding:14px 4px 18px}
+.brand{padding:0 8px 10px;font-weight:700;font-size:17px;line-height:1.25}
+.brand small{display:block;font-weight:400;font-size:13px;color:var(--cn-text-muted);letter-spacing:.04em}
+.side.mini .brand{font-size:0;padding:0 0 10px}.side.mini .brand small{font-size:0}
+.grp{margin:12px 8px 4px;font-size:14px;color:var(--cn-text-muted)}
+.side.mini .grp{text-align:center;font-size:13px;margin:10px 0 4px}
+.nav{display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;font-size:14px;color:#334155;cursor:pointer}
+.side.mini .nav{padding:9px 0;text-align:center;font-size:13px}
+.nav:hover{background:rgba(255,255,255,.7)}
+.nav.on{background:var(--cn-surface);color:var(--cn-primary);font-weight:600;box-shadow:inset 0 0 0 1px var(--cn-border)}
+.nav.ext{color:var(--cn-text-muted)}
+.side .foot{margin-top:auto;padding:10px 8px 0;display:flex;flex-direction:column;gap:6px}
+.collapse{background:none;border:1px solid var(--cn-border);border-radius:8px;padding:6px 8px;font-size:13px;color:var(--cn-text-muted);cursor:pointer}
+
+main{flex:1;min-width:0;padding:20px 24px 60px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+h1{font-size:24px;font-weight:700;margin:0}
+.sub{color:var(--cn-text-muted);font-size:14px}
+.bar .sp{flex:1}
+.role{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--cn-text-muted)}
+.role select{padding:5px 8px;border:1px solid var(--cn-border);border-radius:8px;background:var(--cn-surface)}
+.save{font-size:14px;color:var(--cn-text-muted)}
+.save.ok{color:var(--cn-success)} .save.bad{color:var(--cn-danger)}
+.tasks{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--cn-text-muted)}
+.tasks a,.tasks .now{padding:5px 9px;border:1px solid var(--cn-border);border-radius:8px;background:var(--cn-surface);text-decoration:none;color:var(--cn-text)}
+.tasks .now{background:var(--cn-primary-soft);border-color:var(--cn-border-strong)}
+.btn{border:1px solid var(--cn-border);background:var(--cn-surface);border-radius:8px;padding:7px 12px;font-size:15px;cursor:pointer}
+.btn:hover{border-color:var(--cn-border-strong)}
+.btn.pri{background:var(--cn-primary);border-color:var(--cn-primary);color:#fff}
+.btn.pri:hover{background:var(--cn-primary-hover)}
+.btn.sm{padding:4px 9px;font-size:14px}
+.btn.dgr{color:var(--cn-danger);border-color:var(--cn-danger-soft);background:var(--cn-danger-soft)}
+.btn:disabled{color:var(--cn-placeholder);background:var(--cn-surface-muted);border-color:var(--cn-border);cursor:not-allowed}
+.card{background:var(--cn-surface);border:1px solid var(--cn-border);border-radius:12px;margin:0 0 20px}
+.card>h2{margin:0;padding:12px 16px;font-size:16px;font-weight:600;border-bottom:1px solid var(--cn-surface-muted)}
+.card>.bd{padding:16px;overflow-x:auto}
+.card>.ft{padding:10px 16px;border-top:1px solid var(--cn-surface-muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+label{display:block;font-size:14px;font-weight:600;color:var(--cn-text-muted);margin:10px 0 4px}
+label:first-child{margin-top:0}
+input[type=text],input[type=date],input[type=number],input[type=datetime-local],select,textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--cn-border);border-radius:8px;background:var(--cn-surface);font-size:16px}
+textarea{min-height:66px;resize:vertical}
+input:disabled,select:disabled,textarea:disabled{background:var(--cn-surface-muted);color:var(--cn-text);cursor:not-allowed}
+.chip:has(input:disabled){cursor:not-allowed;opacity:.75}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--cn-primary);outline-offset:1px;box-shadow:0 0 0 4px var(--cn-focus)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--cn-border);border-radius:999px;padding:5px 11px;font-size:16px;background:var(--cn-surface-subtle)}
+.chip input{width:auto;margin:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rec{border:1px solid var(--cn-border);border-radius:10px;background:var(--cn-surface-subtle);margin:0 0 8px}
+.rec>summary{list-style:none;cursor:pointer;padding:10px 13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:15px}
+.rec>summary::-webkit-details-marker{display:none}
+.rec>summary .t{font-weight:600}
+.rec>.bd{padding:2px 13px 13px;border-top:1px solid var(--cn-border)}
+.tag{font-size:13px;padding:2px 8px;border-radius:999px;background:var(--cn-surface-muted);color:var(--cn-text-muted)}
+.tag.ok{background:var(--cn-success-soft);color:var(--cn-success)}
+.tag.wait{background:var(--cn-reward-soft);color:var(--cn-reward)}
+.tag.bad{background:var(--cn-danger-soft);color:var(--cn-danger)}
+.tag.new{background:var(--cn-primary-soft);color:var(--cn-primary)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--cn-surface-muted);vertical-align:top}
+th{font-weight:600;color:var(--cn-text-muted);font-size:14px}
+.empty{margin:2px 0 12px}
+.empty b{display:block;font-size:16px;font-weight:600;color:var(--cn-text)}
+.empty span{display:block;font-size:13px;color:var(--cn-text-muted);max-width:440px;margin-top:3px}
+.note{font-size:13px;color:var(--cn-text-muted);margin-top:8px;line-height:1.55}
+.warn{border:1px solid var(--cn-danger);background:var(--cn-danger-soft);border-radius:10px;padding:10px 12px;font-size:14px;margin:0 0 12px}
+.banner{border:1px solid var(--cn-reward);background:var(--cn-reward-soft);border-radius:10px;padding:10px 12px;font-size:14px;margin:0 0 12px}
+.miss{color:var(--cn-placeholder)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1f2a3d;color:#fff;
+  padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s;max-width:min(90vw,620px)}
+#toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(31,42,61,.42);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:40}
+.modal .box{background:var(--cn-surface);border-radius:12px;max-width:760px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.22)}
+.modal h2{margin:0;padding:12px 16px;font-size:16px;border-bottom:1px solid var(--cn-border)}
+.modal .bd{padding:14px 16px;max-height:62vh;overflow:auto}
+.modal pre{white-space:pre-wrap;word-break:break-word;font-size:14px;background:var(--cn-surface-subtle);padding:12px;border-radius:8px;border:1px solid var(--cn-border)}
+.only-off{display:none}
+@media (max-width:760px){
+  .side{width:56px;padding:14px 4px 18px}
+  .side .brand{font-size:0;padding:0 0 10px}.side .brand small{font-size:0}
+  .side .nav{padding:9px 0;text-align:center;font-size:13px}
+  .side .grp{text-align:center;font-size:13px;margin:10px 0 4px}
+  main{padding:16px 14px 50px}
+}
+.gate{max-width:420px;margin:60px auto 0;padding:28px 24px;background:var(--cn-surface);border:1px solid var(--cn-border);border-radius:12px}
+.gate h1{font-size:20px;font-weight:700;margin:0 0 16px}
+.gate .fld{margin:10px 0 4px;font-size:14px;font-weight:600;color:var(--cn-text-muted)}
+.gate input.pw{width:100%;padding:9px 11px;border:1px solid var(--cn-border);border-radius:8px;background:var(--cn-surface);font-size:16px}
+.gate input.pw:focus{outline:2px solid var(--cn-primary);outline-offset:1px;box-shadow:0 0 0 4px var(--cn-focus)}
+.gate .go{margin-top:18px;width:100%;padding:10px;border:0;border-radius:8px;background:var(--cn-primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.gate .go:hover{background:var(--cn-primary-hover)}
+.gate .err{margin:8px 0 0;padding:8px 10px;border-radius:8px;font-size:14px;background:var(--cn-danger-soft);color:var(--cn-danger);border:1px solid var(--cn-danger)}
+.gate .err.on{display:block}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side" id="side"></aside>
+  <main id="app"></main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="modal"></div>
+
+<script>
+/* ============================================================
+   支点课堂 · 研究管理（原型）
+   依据 04《研究支持功能补充设计方案》§二/§三/§十/§十一/§十二 与 05《界面文案与视觉补充要求》。
+   只做研究侧四个管理入口；教学侧页面不复制一份假界面，一律跳回本机运行的支点课堂。
+   ============================================================ */
+const DB_KEY = 'ktpt_v17_rs';
+const WB_KEY = 'ktpt_v16_wb';      // 平台开发工作台
+const LD_KEY = 'ktpt_v16_ld';      // 教学设计工作台
+const ROLE_KEY = 'ktpt_v17_role';  // 本窗口自己的研究身份；学生两端共用的 ktpt_v16_me 不在这里读写，避免成员名变成研究角色
+const ADMIN_KEY = 'ktpt_v16_admin'; // 与两个学生窗口共用同一把管理密码
+const CHANNEL = 'ktpt17rs';
+
+function fnv (s) { let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16); }
+function readDigest (k) {
+  try { const o = JSON.parse(localStorage.getItem(k) || 'null'); return o && o.digest ? o : null; }
+  catch (e) { return null; }
+}
+function putDigest (k, v) { const salt = Math.random().toString(36).slice(2, 12);
+  localStorage.setItem(k, JSON.stringify({ salt, digest: fnv(v + ':' + salt) })); }
+const passState = () => !!readDigest(ADMIN_KEY);
+const setPass = p => putDigest(ADMIN_KEY, p);
+const checkPass = p => { const o = readDigest(ADMIN_KEY); return !!(o && fnv(p + ':' + o.salt) === o.digest); };
+
+/* 空值不是「没有」这么简单：04 §十一 要求至少区分六类，导出时带原因 */
+const MISSING = {
+  blank:     '未填写',
+  not_happn: '未发生或未实施',
+  uncollect: '未采集',
+  tech:      '技术失败',
+  na:        '不适用',
+  denied:    '权限排除'
+};
+const NODATA = '未填写';
+const FRAME = { P: 'P3–P6（平台开发）', M: 'M1–M5（建模）', T: '教师自录指导材料' };
+const NODES = {
+  n1: '支架开放前已有的作品', n2: '首轮提交或展示版', n3: '反馈后的修订版', n4: '最终提交版'
+};
+const EVENTS = {
+  grant: '获得访问权限', open: '打开支架', expand: '展开某项提示', cite: '学生关联引用'
+};
+const ROLES = ['教师', '助教', '外部评审者'];
+const SOURCE = { reg: '研究者登记', self: '学生填写', system: '系统事件', backfill: '事后补记', import: '外部导入', ai: 'AI 生成', code: '研究者编码', demo: '演示操作' };
+
+/* ---------- 已确认的班级与组队名单（2026-11-22 教师确认） ----------
+   两个班各自独立名单，组队是确认过的事实，开机就登记成小组卡；内容领域只是小组字段，不做筛选维度 */
+const CLASS_NAMES = ['科教班', '国优班'];
+const ROSTER_SINCE = '2026-11-22';
+const CLASSES = {
+  '科教班': {
+    roster: {
+      '第1组':['孙千然','朱倢伃','李吉梅'], '第2组':['陈然','詹淑惺','余佳珈'],
+      '第3组':['黄彤','杨正馨','刘尚怡'],   '第4组':['黄鈺婷','黄楠','刘倩'],
+      '第5组':['张笑笑','迪娜拉·吐鲁松别克','封烨'], '第6组':['祝萱琦','陈媛'],
+      '第7组':['于点','叶蓓','茅一萱'],     '第8组':['孙硕','李俊坤','苏天深']
+    },
+    domains: [['物质科学',['第1组','第2组']], ['生命科学',['第3组','第4组']],
+      ['地球与宇宙科学',['第5组','第6组']], ['技术与工程',['第7组','第8组']]]
+  },
+  '国优班': {
+    roster: {
+      '第1组':['刘语桐','孙行健','戴斌辉','孙彬哲'], '第2组':['林渝翰','孙婷','倪庆华'],
+      '第3组':['王龙飞','陈怡婷','毛文轩'], '第4组':['庞羡钊','邹素芬','侯昀卓','黄家禧'],
+      '第5组':['杨子杰','苏子岚','陈洋庆'], '第6组':['应苹苹','刘源琳'],
+      '第7组':['张凌韵','杨新月'], '第8组':['周思琪','阮章婧'],
+      '第9组':['蒋安琪','单东梅'], '第10组':['刘懿慧','王晨好','马倩倩'],
+      '第11组':['徐书楠','马珂敏儿']
+    },
+    domains: [['数学',['第1组','第2组']], ['物理',['第3组']], ['化学',['第4组','第5组']],
+      ['生物',['第6组','第7组']], ['地理',['第8组','第9组']], ['信息技术',['第10组','第11组']]]
+  }
+};
+const classRoster = cn => (CLASSES[cn] || {}).roster || {};
+const classDomains = cn => (CLASSES[cn] || {}).domains || [];
+const classDomainOf = (cn, gn) => { const d = classDomains(cn).find(x => x[1].indexOf(gn) >= 0); return d ? d[0] : ''; };
+const classHeadCount = cn => Object.keys(classRoster(cn)).reduce((n, g) => n + classRoster(cn)[g].length, 0);
+const groupOf = (name, cls) => {
+  const search = cls ? [cls] : CLASS_NAMES;
+  for (const cn of search) { const r = classRoster(cn);
+    for (const gn of Object.keys(r)) if (r[gn].indexOf(name) >= 0) return { group: gn, class: cn }; }
+  return null;
+};
+const headCount = () => CLASS_NAMES.reduce((n, cn) => n + classHeadCount(cn), 0);
+const rosterNames = () => CLASS_NAMES.reduce((a, cn) => a.concat(Object.keys(classRoster(cn)).reduce((b, g) => b.concat(classRoster(cn)[g]), [])), []);
+const namesOf = s => String(s == null ? '' : s).split(/[、,，;；\s]+/).map(x => x.trim()).filter(Boolean);
+/* 迁移只认这些旧示例字符串，教师自己写过的内容一律不动 */
+const DEMO_CLASS_RE = /示例班级[AB]（(?:高中|小学初中)）?|示例班级[AB]|^国优计划班级$|^国优计划2班$/g;
+const DEMO_MEMBERS = ['示例成员A','示例成员B','示例成员C','示例成员D','示例成员E','示例成员F','林小满','陈子昂'];
+const DEMO_ANON = { '示例成员A':'P-A-01', '示例成员B':'P-A-02', '示例成员C':'P-A-03' };
+/* 更早版本的示例数据用过两个像真名的演示姓名，充当快照记录人与材料添加人。本窗口不改写学生存储，只把它们当成身份线索拦在待复核里 */
+const SUSPECT_NAMES = ['林小满','陈子昂'];
+
+/* 每个可填写对象一张卡：字段定义只写一次，界面、导出、验收都读它 */
+const CFG = {
+  plan: { store: 'plans', pre: 'P', word: '研究安排', add: '新建研究安排', title: f => (f.name || '未命名研究') + ' ' + (f.ver || 'V1'), fields: [
+    { k: 'name', l: '研究名称', t: 'text' },
+    { k: 'ver', l: '方案版本', t: 'text', ph: 'V1' },
+    { k: 'classes', l: '涉及班级', t: 'mset', from: 'classes' },
+    { k: 'window_from', l: '观察时段开始', t: 'date' },
+    { k: 'window_to', l: '观察时段结束', t: 'date' },
+    { k: 'tasks', l: '任务范围', t: 'mset', opts: ['第三周平台开发', '第六周教学设计', '后续修订与展示'] },
+    { k: 'compare', l: '主要比较对象', t: 'text', ph: '例：同一任务两轮教学设计之间的差别' },
+    { k: 'nodes', l: '计划保存节点', t: 'mset', opts: Object.values(NODES) },
+    { k: 'reason', l: '这一版改动理由', t: 'text', ph: '相对上一版改了什么、为什么' }
+  ] },
+  cond: { store: 'conds', pre: 'C', word: '条件', add: '添加条件', title: f => f.name || '未命名条件', fields: [
+    { k: 'name', l: '条件名称', t: 'text' },
+    { k: 'unit', l: '分配单位', t: 'sel', opts: ['', '小组', '个人'], req: true },
+    { k: 'clazz', l: '所属班级', t: 'sel', from: 'classes' },
+    { k: 'who', l: '所属组或个人', t: 'text' },
+    { k: 'pair', l: '配对编号', t: 'text' },
+    { k: 'topic', l: '主题', t: 'text' },
+    { k: 'basis', l: '分配依据', t: 'text', ph: '教师指定／报名／按名单顺序等，写清实际做法' },
+    { k: 'at', l: '分配时间', t: 'date' }
+  ] },
+  person: { store: 'persons', pre: 'R', word: '参与者', add: '添加参与者', title: f => f.anon || '未编号', fields: [
+    { k: 'anon', l: '匿名编号', t: 'text', ph: 'P-A-01' },
+    { k: 'clazz', l: '班级', t: 'sel', from: 'classes' },
+    { k: 'subject', l: '学科背景', t: 'text', miss: true },
+    { k: 'design', l: '既往教学设计经历', t: 'text', miss: true },
+    { k: 'coding', l: '编程与 Qoder 使用经历', t: 'text', miss: true }
+  ] },
+  group: { store: 'groups', pre: 'G', word: '小组', add: '添加小组', title: f => f.no || '未编号', fields: [
+    { k: 'no', l: '班级与组号', t: 'text', ph: CLASS_NAMES[0] + ' 第1组' },
+    { k: 'who', l: '成员', t: 'text', local: true, ph: '顿号分隔，与班级名单一致' },
+    { k: 'domain', l: '内容领域', t: 'sel', opts: [''].concat(CLASS_NAMES.reduce((a, cn) => a.concat(classDomains(cn).map(d => d[0])), [])) },
+    { k: 'since', l: '当前名单生效时间', t: 'date', req: true },
+    { k: 'size_ok', l: '人数是否在 2–3 人', t: 'sel', opts: ['', '是', '否，见说明'] }
+  ] },
+  memberlog: { store: 'memberlogs', pre: 'L', word: '成员调整', add: '登记成员调整', title: f => (f.no || '未选组') + ' ' + (f.act || '') + ' ' + (f.who || ''), fields: [
+    { k: 'no', l: '哪个小组', t: 'sel', from: 'groups' },
+    { k: 'act', l: '调整', t: 'sel', opts: ['', '加入', '退出', '改名'] },
+    { k: 'who', l: '涉及的人', t: 'text' },
+    { k: 'since', l: '生效时间', t: 'date', req: true },
+    { k: 'note', l: '说明', t: 'text' }
+  ] },
+  scaf: { store: 'scaffolds', pre: 'K', word: '支架', add: '添加支架', title: f => (f.name || '未命名支架') + ' ' + (f.ver || 'V1'), fields: [
+    { k: 'name', l: '名称', t: 'text' },
+    { k: 'frame', l: '框架类型', t: 'sel', opts: ['', FRAME.P, FRAME.M, FRAME.T] },
+    { k: 'body', l: '实际内容', t: 'ta' },
+    { k: 'ver', l: '内容版本', t: 'text', ph: 'V1' },
+    { k: 'task', l: '适用任务', t: 'sel', opts: ['', '第三周平台开发', '第六周教学设计', '后续修订与展示'] },
+    { k: 'to', l: '发放对象', t: 'text', ph: CLASS_NAMES[0] + ' 全部 · 第1组 · P-A-03' },
+    { k: 'plan_at', l: '计划开放时间', t: 'datetime-local' }
+  ] },
+  /* 04 §三：某组通过投屏、转发或线下讲解接触到未分配的支架，如实登记 */
+  extra: { store: 'extra', pre: 'X', word: '额外接触', add: '登记额外接触', title: f => (f.who || '未填对象') + ' ' + (f.when || ''), fields: [
+    { k: 'who', l: '哪些组或个人接触了', t: 'text' },
+    { k: 'when', l: '接触时间', t: 'date' },
+    { k: 'scope', l: '接触到的支架与范围', t: 'text' },
+    { k: 'src', l: '来源', t: 'sel', opts: ['', '课堂投屏', '同伴转发', '线下讲解', '其他'] }
+  ] },
+  /* 04 §四 个人测量：题目与时点分开记，没开课前测的不算前测 */
+  msr: { store: 'msrs', pre: 'M', word: '测量', add: '新建测量', title: f => (f.name || '未命名测量') + ' ' + (f.ver || ''), fields: [
+    { k: 'name', l: '测量名称', t: 'text' },
+    { k: 'ver', l: '题目与版本', t: 'text', ph: '例：建模任务单 V1' },
+    { k: 'when', l: '时点类型', t: 'sel', opts: ['', '开课前测', '课后测', '当前时点测量', '回顾性自报'], req: true },
+    { k: 'kind', l: '测量形式', t: 'sel', opts: ['', '量表自评', '表现任务', '作品说明', '访谈记录'] },
+    { k: 'clazz', l: '涉及班级', t: 'mset', from: 'classes' },
+    { k: 'task', l: '挂靠任务', t: 'sel', opts: ['', '第三周平台开发', '第六周教学设计', '后续修订与展示'] },
+    { k: 'open_at', l: '开放时间', t: 'datetime-local' },
+    { k: 'limit', l: '预计用时', t: 'text', ph: '例：25 分钟', miss: true },
+    { k: 'tools', l: '允许工具', t: 'text', ph: '例：Qoder 网页版、纸笔；不限写「不限」', miss: true },
+    { k: 'solo', l: '是否独立作答', t: 'sel', opts: ['', '是，个人独立完成', '否，允许组内讨论', '未约定'] },
+    { k: 'rubric', l: '评价标准与版本', t: 'text', ph: '例：rubric V2', miss: true },
+    { k: 'score_src', l: '评分来源', t: 'sel', opts: ['', '平台内评分', '外部导入', '不评分，只记作答状态'] }
+  ] },
+  mres: { store: 'mres', pre: 'T', word: '作答记录', add: '登记个人作答', title: f => (f.msr || '未选测量') + ' · ' + (f.anon || '未选人'), fields: [
+    { k: 'msr', l: '哪次测量', t: 'sel', from: 'msr', req: true },
+    { k: 'anon', l: '匿名编号', t: 'sel', from: 'person' },
+    { k: 'state', l: '作答状态', t: 'sel', opts: ['', '实际完成', '未提交', '技术中断', '退出'], req: true },
+    { k: 'done_at', l: '提交或中断时间', t: 'datetime-local' },
+    { k: 'score', l: '分数或等级', t: 'text', ph: '未作答留空，不记零分', miss: true },
+    { k: 'reason', l: '评分理由', t: 'ta' },
+    { k: 'reviewer', l: '评分人', t: 'text' },
+    { k: 'check', l: '是否复核', t: 'sel', opts: ['', '未复核', '已复核，结果另存一条'] }
+  ] },
+  /* 04 §五 作品评审：评审的是指定快照的完整材料包，研究评分不并入课程成绩 */
+  review: { store: 'reviews', pre: 'RV', word: '评审记录', add: '新建评审记录', title: f => (f.code || '未编号') + ' ' + (f.target || ''), fields: [
+    { k: 'code', l: '评审编号', t: 'text', ph: '例：RV-A-01（与身份对应表分开保存）' },
+    { k: 'target', l: '评审对象', t: 'sel', from: 'group' },
+    { k: 'snap', l: '快照与材料包', t: 'text', ph: '例：第6周展示快照 2026-11-18，四份作品齐全' },
+    { k: 'frame', l: '框架类型', t: 'sel', opts: ['', FRAME.P, FRAME.M, FRAME.T] },
+    { k: 'mask', l: '实际遮蔽措施', t: 'text', ph: '例：隐去姓名学号、重编文件名' },
+    { k: 'leak', l: '仍无法遮蔽的线索', t: 'text', miss: true },
+    { k: 'blind', l: '首评是否独立', t: 'sel', opts: ['', '是，看不到他人结果', '否，先看过他人结果', '未记录'] },
+    { k: 'reviewer', l: '评审者', t: 'text' },
+    { k: 'score', l: '研究评分或等级', t: 'text', ph: '未评时留空，选原因', miss: true },
+    { k: 'reason', l: '评分理由', t: 'ta' },
+    { k: 'course', l: '是否写回课程成绩', t: 'sel', opts: ['', '否，研究评分独立记录', '是，另行在课程成绩里登记'] },
+    { k: 'recheck', l: '复核', t: 'sel', opts: ['', '未复核', '已复核，结果另存一条，不覆盖首评'] }
+  ] }
+};
+const CARDS = ['plan', 'cond', 'person', 'group', 'memberlog', 'scaf', 'extra', 'msr', 'mres', 'review'];
+
+const PAGES = [
+  { id: 'plan',  label: '研究安排', grp: '研究管理' },
+  { id: 'cond',  label: '条件配置', grp: '研究管理' },
+  { id: 'scaf',  label: '支架与发放', grp: '研究管理' },
+  { id: 'use',   label: '使用记录', grp: '研究管理' },
+  { id: 'who',   label: '班级与组队', grp: '研究管理' },
+  { id: 'measure', label: '个人测量', grp: '研究管理' },
+  { id: 'review',  label: '作品评审', grp: '研究管理' },
+  { id: 'export',  label: '研究导出', grp: '研究管理' },
+  { id: 'class',   label: '课堂管理', grp: '教学（支点课堂）', ext: 'http://localhost:3001/teacher/' },
+  { id: 'clz',     label: '班级管理', grp: '教学（支点课堂）', ext: 'http://localhost:3001/teacher/' },
+  { id: 'sheet',   label: '学习单',   grp: '教学（支点课堂）', ext: 'http://localhost:3001/teacher/' },
+  { id: 'data',    label: '数据管理', grp: '教学（支点课堂）', ext: 'http://localhost:3001/teacher/' },
+  { id: 'set',     label: '设置',     grp: '教学（支点课堂）', ext: 'http://localhost:3001/teacher/' }
+];
+
+/* ---------- 存取 ---------- */
+const now = () => Date.now();
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const fmtTime = t => { const d = new Date(t), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
+const fmtDay = t => fmtTime(t).slice(0, 10);
+const short = (t, n) => { t = String(t || '').replace(/\s+/g, ' '); return t.length > n ? t.slice(0, n) + '…' : t; };
+
+function blankDb () {
+  return { _rev: 0, at: now(), createdBy: {}, stash: {}, atoms: {}, seq: { P: 0, C: 0, R: 0, G: 0, L: 0, K: 0, V: 0, E: 0, X: 0, M: 0, T: 0, RV: 0 },
+    cards: { plans: [], conds: [], persons: [], groups: [], memberlogs: [], scaffolds: [], extra: [], msrs: [], mres: [], reviews: [] },
+    classes: [], condOn: false, grants: [], events: [],
+    filters: { plan: '', from: '', to: '', classes: [], tasks: [], round: '', snap: '' },
+    reviewed: {}, expSeq: 0, revisions: [], activity: [], exports: [], rosterSeeded: '' };
+}
+let db = blankDb();
+let TAB = Math.random().toString(36).slice(2, 8);
+let ui = { page: 'plan', open: {}, modal: null, side: false, gateErr: '' };
+let ME = localStorage.getItem(ROLE_KEY) || '教师';
+let dirty = false, saveTimer = null, snapshotBeforeRemote = null;
+
+/* ---------- 名单落地：组队按 2026-11-22 确认名单登记，旧示例班级与示例成员改成本班真值 ---------- */
+function seedAtom (id, k, v, by) {
+  if (get(id + '.' + k) === v) return false;
+  db.atoms[id + '.' + k] = { text: v, by: by || ME, at: now(), src: 'reg' };
+  return true;
+}
+function migrateRoster () {
+  if (db.rosterSeeded) return false;
+  let hit = false, stale = false;
+  const swap = t => String(t == null ? '' : t).replace(DEMO_CLASS_RE, CLASS_NAMES[0]);
+  /* 示例数据里编造的「某成员退出」是对本班同学的假陈述，整条撤下并暂存，可撤销 */
+  const drop = cardsOf('memberlog').filter(id => namesOf(field(id, 'who')).some(m => DEMO_MEMBERS.indexOf(m) >= 0));
+  if (drop.length) {
+    db.stash = db.stash || {};
+    drop.forEach(id => { const atoms = {}; Object.keys(db.atoms).forEach(k => { if (k.indexOf(id + '.') === 0) atoms[k] = db.atoms[k]; });
+      db.stash[id] = { at: now(), index: db.cards.memberlogs.indexOf(id), name: 'memberlog', atoms, grants: [], by: '系统迁移' }; });
+    db.cards.memberlogs = db.cards.memberlogs.filter(id => drop.indexOf(id) < 0);
+    hit = true;
+  }
+  Object.keys(db.atoms).forEach(k => { const a = db.atoms[k]; if (!a || !a.text) return;
+    const t = swap(a.text); if (t !== a.text) { a.text = t; hit = stale = true; } });
+  db.grants.forEach(g => { const t = swap(g.to); if (t !== g.to) { g.to = t; hit = stale = true; } });
+  if (db.classes.some(c => /示例班级/.test(c.name || ''))) {
+    db.classes = uniq(db.classes.map(c => swap(c.name))).map(name => ({ name })); hit = stale = true;
+  }
+  CLASS_NAMES.forEach(cn => { if (!db.classes.some(c => c.name === cn)) { db.classes.push({ name: cn }); hit = true; } });
+  CLASS_NAMES.forEach(cn => {
+    const roster = classRoster(cn);
+    Object.keys(roster).forEach(gn => {
+      const no = cn + ' ' + gn;
+      let id = cardsOf('group').find(x => field(x, 'no') === no);
+      const fresh = !id;
+      if (fresh) { id = nextId('group'); db.cards.groups.push(id); db.createdBy[id] = { by: '教师确认名单', at: now() }; }
+      if (fresh && seedAtom(id, 'no', no, '教师确认名单')) hit = true;
+      const cur = namesOf(field(id, 'who'));
+      const wasDemo = fresh || !cur.length || cur.every(m => DEMO_MEMBERS.indexOf(m) >= 0);
+      const set = (k, v, force) => { if (v && (force || !field(id, k)) && seedAtom(id, k, v, '教师确认名单')) hit = true; };
+      const n = roster[gn].length;
+      set('who', roster[gn].join('、'), wasDemo);
+      set('since', ROSTER_SINCE, wasDemo);
+      set('domain', classDomainOf(cn, gn), wasDemo);
+      set('size_ok', n >= 2 && n <= 3 ? '是' : '', wasDemo);
+    });
+  });
+  /* 使用记录的「谁」写的是匿名编号：早期示例成员当过的演员换成对应编号 */
+  db.events.forEach(e => { const t = DEMO_ANON[swap(e.who)] || swap(e.who);
+    if (t !== e.who) { e.who = t; hit = stale = true; } });
+  db.rosterSeeded = ROSTER_SINCE;
+  if (hit) log('按 ' + ROSTER_SINCE + ' 确认名单登记班级与组队' + (stale ? '，并改写本机遗留的旧班级名' : ''));
+  return hit;
+}
+
+function load () {
+  const raw = localStorage.getItem(DB_KEY); if (!raw) return false;
+  try { const o = JSON.parse(raw); db = Object.assign(blankDb(), o);
+    db.cards = Object.assign(blankDb().cards, o.cards || {});
+    db.seq = Object.assign(blankDb().seq, o.seq || {});
+    db.atoms = o.atoms || {};
+    if (migrateRoster()) save(true);
+    return true; } catch (e) { return false; }
+}
+function save (quiet) {
+  try {
+    db._rev = (db._rev || 0) + 1;
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    setSave('ok'); bc && bc.postMessage({ type: 'sync', tab: TAB, rev: db._rev });
+    if (!quiet) { dirty = false; }
+    return true;
+  } catch (e) { setSave('bad', e); return false; }
+}
+function setSave (kind, err) {
+  const el = document.querySelector('.save'); if (!el) return;
+  el.className = 'save ' + (kind === 'ok' ? 'ok' : kind === 'bad' ? 'bad' : '');
+  el.textContent = kind === 'ok' ? '已保存（本机）' : kind === 'bad' ? '保存失败，内容仍在本页' : '保存中';
+  if (kind === 'bad') { el.title = String(err || ''); }
+}
+const isCard = id => CARDS.some(c => (db.cards[CFG[c].store] || []).includes(id));
+const val = id => { const c = cardOf(id); return c ? get(c.store + '.' + id) : ''; };
+const store = cfg => db.cards[cfg.store];
+const cardsOf = name => (db.cards[CFG[name].store] || []).slice();
+function cfgOf (name) { return CFG[name]; }
+function cardOf (id) { for (const n of CARDS) if ((db.cards[CFG[n].store] || []).includes(id)) return { name: n, cfg: CFG[n], id }; return null; }
+/* 编号前缀不再都是单字符（RV01），按第一个字母找类型会把评审认成参与者 */
+function typeName (id) { const s = db.stash && db.stash[id]; if (s && s.name) return s.name;
+  let best = null; CARDS.forEach(n => { const p = CFG[n].pre;
+    if (id.startsWith(p) && (!best || p.length > CFG[best].pre.length)) best = n; }); return best; }
+function get (k) { return (db.atoms[k] && db.atoms[k].text) || ''; }
+function meta (k) { return db.atoms[k] || null; }
+function field (id, k) { return get(id + '.' + k); }
+function missKey (id, k) { return id + '.' + k + '.__miss'; }
+function missOf (id, k) { return MISSING[get(missKey(id, k))] || ''; }
+/* 有内容才算填了；只选了「未采集」这类原因不算答案 */
+function isFilled (id, k) { return !!String(field(id, k) || '').trim(); }
+
+function put (k, v, opt = {}) {
+  const cur = db.atoms[k];
+  if (cur && cur.text === v) return;
+  // 在本窗口改动的值，来源就是现在的登记人，不沿用旧演示数据打的「演示操作」
+  db.atoms[k] = { text: v, by: ME, at: now(), src: opt.src || 'reg' };
+  if (cur && cur.text && cur.text !== v) {
+    db.revisions.unshift({ at: now(), by: ME, k, from: cur.text, to: v });
+    db.revisions = db.revisions.slice(0, 400);
+  }
+  if (v && v.trim() && !/\.__miss$/.test(k)) delete db.atoms[k + '.__miss'];
+  log(opt.log || ('改 ' + k));
+  dirty = true; clearTimeout(saveTimer); setSave('wait');
+  saveTimer = setTimeout(() => save(), 350);
+}
+function log (text) { db.activity.unshift({ at: now(), by: ME, text }); db.activity = db.activity.slice(0, 200); }
+function nextId (name) { const cfg = CFG[name]; const n = (db.seq[cfg.pre] = (db.seq[cfg.pre] || 0) + 1);
+  return cfg.pre + String(n).padStart(2, '0'); }
+function addCard (name, preset) {
+  const cfg = CFG[name], id = nextId(name);
+  db.cards[cfg.store].push(id);
+  db.createdBy[id] = { by: ME, at: now() };
+  Object.entries(preset || {}).forEach(([k, v]) => { db.atoms[id + '.' + k] = { text: v, by: ME, at: now(), src: 'reg' }; });
+  log('新增' + cfg.word + ' ' + id);
+  save(); render(); return id;
+}
+/* 04 §三：安排与支架版本不覆盖已用过的，改成新卡并回写「已被取代」 */
+function supersede (id) {
+  const c = cardOf(id); if (!c) return;
+  const copy = {};
+  c.cfg.fields.forEach(f => { copy[f.k] = field(id, f.k); });
+  const nid = addCard(c.name, copy);
+  db.atoms[nid + '.from'] = { text: id, by: ME, at: now(), src: 'system' };
+  db.atoms[id + '.replaced_by'] = { text: nid, by: ME, at: now(), src: 'system' };
+  log(c.cfg.word + ' ' + id + ' 另存为新版本 ' + nid + '（原记录保持只读）');
+  toast('已另存为 ' + nid + '，' + id + ' 保留为只读');
+  return nid;
+}
+function delCard (id) {
+  const c = cardOf(id); if (!c) return;
+  const list = db.cards[c.cfg.store], i = list.indexOf(id);
+  const stash = {}; Object.keys(db.atoms).filter(k => k.startsWith(id + '.')).forEach(k => stash[k] = db.atoms[k]);
+  const removed = db.grants.filter(g => g.scaf === id);
+  db.stash = db.stash || {};
+  db.stash[id] = { at: now(), index: i, name: c.name, atoms: stash, grants: removed, by: ME };
+  list.splice(i, 1);
+  db.grants = db.grants.filter(g => g.scaf !== id);
+  log('移除 ' + id + '（可撤销，历史与内容暂存本页）');
+  save(); render();
+  toast('已移除 ' + id + '，可在下方撤销');
+}
+function undoDel (id) {
+  const s = db.stash && db.stash[id]; if (!s) return;
+  const name = typeName(id); if (!name) return;
+  db.cards[CFG[name].store].splice(s.index, 0, id);
+  Object.assign(db.atoms, s.atoms);
+  db.grants = db.grants.concat(s.grants || []);
+  delete db.stash[id];
+  log('撤销移除 ' + id);
+  save(); render();
+}
+function listVal (id, k) { const s = get(id + '.' + k); return s ? s.split('|').filter(Boolean) : []; }
+function setListVal (id, k, arr) { put(id + '.' + k, arr.join('|'), { log: '改 ' + id + '.' + k }); }
+function setOf (id, k, opt, on) {
+  const cur = listVal(id, k), i = cur.indexOf(opt);
+  if (on && i < 0) cur.push(opt); if (!on && i >= 0) cur.splice(i, 1);
+  setListVal(id, k, cur);
+}
+
+/* ---------- 两个学生窗口的内容：只读，不回写 ---------- */
+let ref = null;
+function readRef () {
+  const pick = k => { try { const o = JSON.parse(localStorage.getItem(k) || 'null'); return o && typeof o === 'object' ? o : null; } catch (e) { return null; } };
+  const wb = pick(WB_KEY), ld = pick(LD_KEY);
+  const at = (o, k) => (((o || {}).atoms || {})[k] || {}).text || '';
+  const g = (wb && wb.group) || (ld && ld.group) || {};
+  const snapHead = (s, from) => ({ code: s.code || '', at: s.at || 0, by: s.by || '', from,
+    round: s.round || '', lesson: s.lessonVersion || '', ver: s.platformVersion || '', unit: s.unit || '',
+    members: (s.members || []).slice(), mats: ((s.data || {}).materials || []).map(m => m.id) });
+  const matRow = (m, from) => ({ id: m.id || '', kind: m.kind || '', name: m.name || '', url: m.url || '',
+    loc: m.loc || '', extracted: !!m.extracted, by: m.by || '', at: m.at || 0, from });
+  const acts = (o, from) => ((o && o.activity) || []).slice(0, 80).map(a => ({ at: a.at || 0, by: a.by || '', text: a.text || '', from }));
+  /* 学生窗口把新结构记录与早期版本遗留分开存；这里读的是原始存储，自己再过一遍同样的判别 */
+  const decs = (o, from) => ((o && o.decisions) || []).filter(d => d && typeof d.target === 'string').map(d => Object.assign({}, d, { from }));
+  const legCount = o => ((o && o.decisions) || []).filter(d => !d || typeof d.target !== 'string').length
+    + ((o && o.legacyDecisions) || []).length;
+  const answers = (o, from) => ((o && o.personal) || []).map(a => Object.assign({}, a, { from }));
+  return { hasWb: !!wb, hasLd: !!ld,
+    cls: g.className || '', groupNo: g.groupNo || '',
+    name: [g.className, g.groupNo].filter(Boolean).join(' '),
+    members: (g.members || []).filter(Boolean),
+    subject: at(wb, 'project.subject') || at(ld, 'project.subject'),
+    plat: at(wb, 'project.platform_name') || at(ld, 'project.platform_name'),
+    ver: at(wb, 'project.platform_version') || at(ld, 'project.platform_version'),
+    decisions: decs(wb, '平台开发工作台').concat(decs(ld, '教学设计工作台')),
+    answers: answers(wb, '平台开发工作台').concat(answers(ld, '教学设计工作台')),
+    legacy: legCount(wb) + legCount(ld),
+    windows: [wb && '平台开发工作台', ld && '教学设计工作台'].filter(Boolean).join('、') || '无',
+    snaps: ((wb && wb.snaps) || []).map(s => snapHead(s, '平台开发工作台'))
+      .concat(((ld && ld.snaps) || []).map(s => snapHead(s, '教学设计工作台'))),
+    mats: ((wb && wb.materials) || []).map(m => matRow(m, '平台开发工作台'))
+      .concat(((ld && ld.materials) || []).map(m => matRow(m, '教学设计工作台'))),
+    edits: acts(wb, '平台开发工作台').concat(acts(ld, '教学设计工作台')),
+    from: wb ? '读自平台开发工作台' : (ld ? '只读到教学设计工作台' : '两个学生窗口还没有内容') };
+}
+function classesList () {
+  return Array.from(new Set(db.classes.map(c => c.name).concat(ref && ref.cls ? [ref.cls] : [])));
+}
+
+/* ---------- 本机协作 ---------- */
+let bc = null;
+try { bc = new BroadcastChannel(CHANNEL); } catch (e) {}
+if (bc) bc.onmessage = ev => {
+  const m = ev.data || {};
+  if (m.tab === TAB) return;
+  if (m.type === 'sync' && m.rev > (db._rev || 0)) { const keep = ui; if (load()) { Object.assign(ui, keep); render(); } }
+  if (m.type === 'here') { presence[m.tab] = { by: m.by, page: m.page, at: now() }; paintPresence(); }
+  if (m.type === 'gone') { delete presence[m.tab]; paintPresence(); }
+};
+window.addEventListener('storage', e => {
+  if (e.key !== DB_KEY) return;
+  try { const o = JSON.parse(e.newValue || 'null'); if (o && o._rev > (db._rev || 0)) { const keep = ui; load(); Object.assign(ui, keep); render(); } } catch (err) {}
+});
+let presence = {};
+function announce () { bc && bc.postMessage({ type: 'here', tab: TAB, by: ME, page: ui.page }); }
+function freshPresence () { const t = now(); return Object.entries(presence).filter(([, v]) => t - v.at < 9000).map(([k, v]) => ({ tab: k, ...v })); }
+function paintPresence () {
+  const el = document.querySelector('.who-here'); if (!el) return;
+  const p = freshPresence().filter(x => x.tab !== TAB);
+  el.textContent = p.length ? '本机还有 ' + p.map(x => x.by + '（' + pageLabel(x.page) + '）').join('、') + ' 正在使用' : '本机没有其他实例在使用';
+}
+const pageLabel = id => (PAGES.find(p => p.id === id) || { label: id }).label;
+window.addEventListener('beforeunload', () => { if (dirty) save(); bc && bc.postMessage({ type: 'gone', tab: TAB }); });
+
+/* ---------- 侧栏与顶栏 ---------- */
+function sidebar () {
+  let last = '';
+  const items = PAGES.map(p => {
+    let h = '';
+    if (p.grp !== last) { last = p.grp; h += '<div class="grp">' + esc(ui.side ? p.grp.slice(0, 2) : p.grp) + '</div>'; }
+    if (p.ext) h += '<a class="nav ext" href="' + p.ext + '" target="_blank" rel="noopener" title="在支点课堂中打开">' + esc(ui.side ? p.label.slice(0, 2) : p.label) + '</a>';
+    else h += '<button class="nav' + (ui.page === p.id ? ' on' : '') + '" data-page="' + p.id + '">' +
+      esc(ui.side ? p.label.slice(0, 2) : p.label) + '</button>';
+    return h;
+  }).join('');
+  return '<div class="brand">支点课堂<small>ClassNode · 研究管理</small></div>' + items +
+    '<div class="foot"><button class="collapse" data-act="help">研究记录说明</button>' +
+    '<button class="collapse" data-act="side">' + (ui.side ? '展开侧栏' : '折叠侧栏') + '</button></div>';
+}
+function topbar () {
+  return '<div class="bar"><h1>' + esc(pageLabel(ui.page)) + '</h1><div class="sp"></div>' +
+    '<span class="tasks">任务入口 <span class="now">研究管理</span>' +
+    '<a href="v16-week3-workbench.html" title="平台开发工作台，内容各存一份">平台开发</a>' +
+    '<a href="v16-week6-lesson-design.html" title="教学设计工作台，内容各存一份">教学设计</a></span>' +
+    '<span class="role">我的身份 <select id="me">' + ROLES.map(r => '<option' + (r === ME ? ' selected' : '') + '>' + esc(r) + '</option>').join('') + '</select></span>' +
+    '<span class="save">已保存（本机）</span></div>' +
+    '<div class="row" style="margin:-6px 0 14px"><span class="sub">' + esc(ref.from) + '：' +
+      (ref.name ? esc(ref.name + (ref.ver ? ' · 平台版本 ' + ref.ver : ' · 平台版本未填')) : '未读到小组信息，可在「班级与组队」里登记') + '</span>' +
+      '<span class="tag who-here"></span></div>' +
+      (ME === '外部评审者' ? '<div class="warn">这个下拉只做记录标记，不改变能看到的范围：外部评审者在这里也能看到全部内容。</div>' : '');
+}
+
+/* ---------- 通用卡面渲染 ---------- */
+function srcOf (id, f) { const m = meta(id + '.' + f.k); return m && m.src && SOURCE[m.src] ? SOURCE[m.src] : ''; }
+function fieldCtl (id, f, dis) {
+  const k = id + '.' + f.k, v = get(k);
+  dis = dis ? ' disabled' : '';
+  if (f.t === 'ta') return '<textarea data-k="' + k + '" ' + dis + '>' + esc(v) + '</textarea>';
+  if (f.t === 'mset') {
+    const opts = f.opts || (f.from === 'classes' ? classesList() : []);
+    const cur = listVal(id, f.k);
+    return '<div class="chips">' + (opts.length ? opts.map(o => '<label class="chip"><input type="checkbox" data-set="' + k + '" data-opt="' + esc(o) + '"' +
+      (cur.includes(o) ? ' checked' : '') + dis + '>' + esc(o) + '</label>').join('') : '<span class="miss">没有可选项，先在「班级与组队」登记班级</span>') + '</div>';
+  }
+  if (f.t === 'sel') {
+    const opts = f.from === 'classes' ? classesList() : (f.from ? cardsOf(f.from).map(id => titleOf(f.from, id)) : f.opts);
+    return '<select data-k="' + k + '" ' + dis + (f.req && !v ? ' aria-invalid="true"' : '') + '>' +
+      opts.map(o => '<option value="' + esc(o) + '"' + (o === v ? ' selected' : '') + '>' + esc(o || '请选择') + '</option>').join('') + '</select>';
+  }
+  return '<input type="' + f.t + '" data-k="' + k + '" value="' + esc(v) + '" placeholder="' + esc(f.ph || '') + '" ' + dis + '>';
+}
+function missCtl (id, f, dis) {
+  if (!f.miss || isFilled(id, f.k)) return '';
+  const cur = get(missKey(id, f.k));
+  return '<div class="row" style="margin-top:4px"><span class="tag">这一项 ' +
+    esc(cur ? MISSING[cur] : '未填写') + '</span><select data-k="' + missKey(id, f.k) + '" aria-label="' + esc(f.l) + ' 的空值原因"' + (dis ? ' disabled' : '') + '>' +
+    '<option value="">原因：请选择</option>' +
+    Object.entries(MISSING).filter(([k2]) => k2 !== 'blank').map(([k2, l]) => '<option value="' + k2 + '"' + (cur === k2 ? ' selected' : '') + '>' + esc(l) + '</option>').join('') +
+    '</select></div>';
+}
+function cardView (name, id) {
+  const cfg = CFG[name];
+  const open = !!ui.open[id];
+  const replaced = get(id + '.replaced_by');
+  const fromVer = get(id + '.from');
+  const shown = titleOf(name, id);
+  return '<details class="rec" data-card="' + id + '"' + (open ? ' open' : '') + '>' +
+    '<summary><span class="t">' + esc(shown) + '</span>' +
+    (replaced ? '<span class="tag bad">已被 ' + esc(replaced) + ' 取代，本条只读</span>' : '<span class="tag new">' + esc(id) + '</span>') +
+    (db.createdBy[id] && db.createdBy[id].by === '示例数据' ? '<span class="tag wait">示例数据</span>' : '') +
+    (fromVer ? '<span class="tag">另存自 ' + esc(fromVer) + '</span>' : '') +
+    '<span class="sp" style="flex:1"></span>' +
+    (replaced ? '' : '<button class="btn sm" data-copy="' + id + '">另存为新版本</button><button class="btn sm dgr" data-del="' + id + '">移除</button>') +
+    '</summary>' + (open ? '<div class="bd">' + (replaced ? '<div class="warn">这条已被 ' + esc(replaced) + ' 取代；要改动请在新版本上改。</div>' : '') +
+      '<div class="grid">' + cfg.fields.map(f => '<div><label for="' + id + '.' + f.k + '">' + esc(f.l) + (f.req ? ' *' : '') + '</label>' +
+        fieldCtl(id, f, replaced) + missCtl(id, f, replaced) + srcTag(id, f) + '</div>').join('') + '</div>' +
+      whoLine(id) + '</div>' : '') + '</details>';
+}
+function titleOf (name, id) { const cfg = CFG[name]; const o = {}; cfg.fields.forEach(f => o[f.k] = field(id, f.k));
+  return cfg.title ? cfg.title(o) : id; }
+function srcTag (id, f) { const s = srcOf(id, f); const m = isFilled(id, f.k) ? '' : missOf(id, f.k); const shown = s && s !== '研究者登记' && s !== '演示操作';
+  return shown || m ? '<div class="note">' + (shown ? '来源：' + esc(s) + '　' : '') + (m ? '当前状态：' + esc(m) : '') + '</div>' : ''; }
+function whoLine (id) {
+  const ks = Object.keys(db.atoms).filter(k => k === id || k.startsWith(id + '.'));
+  const last = ks.map(k => db.atoms[k]).filter(Boolean).sort((a, b) => b.at - a.at)[0];
+  return last ? '<div class="note">最后由 ' + esc(last.by) + ' 在 ' + fmtTime(last.at) + ' 改动</div>' : '';
+}
+function emptyBox (title, line, btn) {
+  return '<div class="empty"><b>' + esc(title) + '</b>' + (line ? '<span>' + esc(line) + '</span>' : '') +
+    (btn ? '<div style="margin-top:10px"><button class="btn pri" data-add="' + btn.name + '">' + esc(btn.label) + '</button></div>' : '') + '</div>';
+}
+function cardsSection (name, helpText) {
+  const cfg = CFG[name], ids = cardsOf(name);
+  return '<div class="card"><h2>' + esc(cfg.word) + '</h2><div class="bd">' +
+    (ids.length ? ids.map(id => cardView(name, id)).join('') : emptyBox('还没有' + cfg.word, '', { name, label: cfg.add })) +
+    (helpText ? '<div class="note">' + esc(helpText) + '</div>' : '') +
+    '</div><div class="ft"><button class="btn pri" data-add="' + name + '">' + esc(cfg.add) + '</button>' +
+    (ids.length ? '<button class="btn" data-open-all="' + name + '">' + (ids.every(i => ui.open[i]) ? '全部收起' : '全部展开') + '</button>' : '') +
+    '</div></div>';
+}
+
+/* ---------- 已实现页面 ---------- */
+function planView () {
+  return topbar() +
+    cardsSection('plan', '改动已用过的安排用「另存为新版本」，旧版本连内容带时间保留。') +
+    activityCard(6);
+}
+function condView () {
+  const on = !!db.condOn;
+  const cls = classesList();
+  const warn = on && !cls.length ? '<div class="warn">条件必须先有班级。到「班级与组队」登记班级后再启用。</div>' : '';
+  const unassigned = cardsOf('cond').filter(id => !field(id, 'unit'));
+  return topbar() +
+    '<div class="card"><h2>比较条件</h2><div class="bd">' + warn +
+    '<label class="chip"><input type="checkbox" id="condon"' + (on ? ' checked' : '') + '>启用比较条件</label>' +
+    '<div class="note">不启用也能做完整研究记录；系统不按班级自动推断条件，也不自动随机分配。</div>' +
+    '</div></div>' +
+    (on ? cardsSection('cond') + (unassigned.length ? '<div class="warn">' + unassigned.length + ' 个条件没写分配单位（组还是个人），导出时列进缺失项。</div>' : '') : '') +
+    activityCard(5);
+}
+function scafView () {
+  const ids = cardsOf('scaf');
+  return topbar() +
+    cardsSection('scaf', '「实际开放」记录真实时间与当时的内容版本；前端隐藏不算权限。') +
+    (ids.length ? '<div class="card"><h2>开放状态</h2><table><thead><tr><th>支架</th><th>版本</th><th>发放对象</th><th>计划开放</th><th>实际开放</th><th></th></tr></thead><tbody>' +
+      ids.map(id => {
+        const g = db.grants.filter(x => x.scaf === id).slice(-1)[0];
+        const opened = !!g;
+        const newer = field(id, 'body') !== (g && g.body);
+        return '<tr><td><b>' + esc(id) + '</b> ' + esc(field(id, 'name')) + '</td><td>' + esc(field(id, 'ver') || NODATA) + '</td>' +
+          '<td>' + esc(field(id, 'to') || NODATA) + '</td><td>' + esc(field(id, 'plan_at') || NODATA) + '</td>' +
+          '<td>' + (opened ? fmtTime(g.at) + '（' + esc(g.by) + '）' + (newer ? ' <span class="tag wait">内容与开放时不一致</span>' : '') : '<span class="miss">未开放</span>') + '</td>' +
+          '<td class="row">' + (opened ? (newer ? '<button class="btn sm" data-newver="' + id + '">内容另存新版本</button>' : '') :
+            '<button class="btn sm pri" data-open="' + id + '">实际开放</button>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '') +
+    activityCard(5);
+}
+function useView () {
+  const rows = db.events.slice().sort((a, b) => b.at - a.at);
+  return topbar() +
+    '<div class="card"><h2>使用记录</h2><div class="bd">' +
+    '<div class="row" style="margin-bottom:10px">' + Object.keys(EVENTS).map(k =>
+      '<span class="chip">' + esc(EVENTS[k]) + ' <b>' + db.events.filter(e => e.kind === k).length + '</b></span>').join('') + '</div>' +
+    (rows.length ? '<table><thead><tr><th>时间</th><th>事件</th><th>谁</th><th>支架与版本</th><th>任务</th><th>来源</th></tr></thead><tbody>' +
+      rows.map(e => '<tr><td>' + fmtTime(e.at) + '</td><td>' + esc(EVENTS[e.kind] || e.kind) + '</td><td>' + esc(e.who || NODATA) + '</td>' +
+        '<td>' + esc((e.scaf || NODATA) + (e.ver ? ' ' + e.ver : '')) + '</td><td>' + esc(e.task || NODATA) + '</td>' +
+        '<td>' + esc(SOURCE[e.src] || e.src || NODATA) + (e.demo && SOURCE[e.src] !== '演示操作' ? ' <span class="tag wait">演示操作</span>' : '') + '</td></tr>').join('') +
+      '</tbody></table>' : emptyBox('还没有使用记录', '权限发放会自动记一条。')) +
+    '<div class="note">打开、展开和停留都不证明理解或采用；只有学生在决策记录里关联提示才算关联引用。</div>' +
+    '<div class="note">学生关联引用读到 ' + ref.decisions.length + ' 条' +
+    (ref.legacy ? '；另有 ' + ref.legacy + ' 条早期版本遗留，字段对不上，不计入。' : '。') + '</div>' +
+    '<div class="note">个人任务作答读到 ' + ref.answers.length + ' 条，只读不回写，不随展示版快照冻结。</div>' +
+    '</div></div>' +
+    cardsSection('extra') +
+    activityCard(5);
+}
+function whoView () {
+  return topbar() +
+    '<div class="card"><h2>班级</h2><div class="bd">' +
+    (classesList().length ? '<div class="chips">' + classesList().map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>' : emptyBox('还没有班级', '在下方填班级名添加。')) +
+    '<div class="note">本窗口只登记研究需要的班级名；学生姓名与学号不进研究包，用匿名编号关联。</div>' +
+    '</div><div class="ft"><label for="newclass" style="margin:0">班级名称</label>' +
+    '<input type="text" id="newclass" style="max-width:240px" placeholder="另一个教学班的班级名">' +
+    '<button class="btn" data-act="add-class">添加班级</button></div></div>' +
+    cardsSection('group', '组队按 ' + ROSTER_SINCE + ' 确认名单登记：' + CLASS_NAMES.length + ' 个班，共 ' +
+      CLASS_NAMES.reduce((n, cn) => n + Object.keys(classRoster(cn)).length, 0) + ' 组 ' + headCount() +
+      ' 人，每组 2–3 人。成员姓名只留本机；成员调整只追加，不改写历史。') +
+    cardsSection('memberlog') +
+    cardsSection('person', '个人背景用于解释差异；缺失时选原因，不默认成「没有经验」。' +
+      '匿名编号要脱离组队名单单独定，对应表不进研究包。') +
+    activityCard(5);
+}
+function measureView () {
+  const ms = cardsOf('msr'), rs = cardsOf('mres');
+  const noState = rs.filter(id => !field(id, 'state'));
+  const names = ms.map(id => titleOf('msr', id));
+  const orphan = rs.filter(id => field(id, 'msr') && !names.includes(field(id, 'msr')));
+  const cnt = (list, s) => list.filter(id => field(id, 'state') === s).length;
+  return topbar() +
+    cardsSection('msr', '没有在开课前施测的只标「当前时点测量」或「回顾性自报」，不回填成原始前测；量表自评与表现任务各记各的，不合成总分。') +
+    (ms.length ? '<div class="card"><h2>登记情况</h2><table><thead><tr><th>测量</th><th>时点</th><th>形式</th><th>开放时间</th><th>已登记</th>' +
+      '<th>实际完成</th><th>未提交</th><th>技术中断</th><th>退出</th><th>未标状态</th></tr></thead><tbody>' +
+      ms.map(id => { const rr = rs.filter(x => field(x, 'msr') === titleOf('msr', id));
+        return '<tr><td><b>' + esc(id) + '</b> ' + esc(short(titleOf('msr', id), 26)) + '</td><td>' + esc(field(id, 'when') || NODATA) + '</td>' +
+          '<td>' + esc(field(id, 'kind') || NODATA) + '</td><td>' + esc(field(id, 'open_at') || NODATA) + '</td><td>' + rr.length + '</td>' +
+          '<td>' + cnt(rr, '实际完成') + '</td><td>' + cnt(rr, '未提交') + '</td><td>' + cnt(rr, '技术中断') + '</td>' +
+          '<td>' + cnt(rr, '退出') + '</td><td>' + (cnt(rr, '') + cnt(rr, '未标状态')) + '</td></tr>'; }).join('') +
+      '</tbody></table><div class="note">五种状态分开计，不合并成「已使用」或「未完成」；分数为空要选空值原因，不默认成零分。</div></div>' : '') +
+    cardsSection('mres', '个人记录独立于小组作品，用稳定匿名编号关联不同测量。未提交、技术中断与退出分开记，缺失原因与评分分开保存。') +
+    '<div class="note">学生端自填的作答读到 ' + ref.answers.length + ' 条' +
+    (ref.answers.length ? '（' + Object.entries(ref.answers.reduce((o, a) => { const s = a.state || (a.answer ? '写下内容但没选提交状态' : '未提交'); o[s] = (o[s] || 0) + 1; return o; }, {}))
+        .map(([k, v]) => k + ' ' + v + ' 条').join('；') + '），只读不回写，不并进上面教师登记的行。'
+      : '。') + '</div>' +
+    (noState.length ? '<div class="warn">' + noState.length + ' 条作答记录还没写作答状态，导出时列在「未填写」，不参与分数计算。</div>' : '') +
+    (orphan.length ? '<div class="warn">' + orphan.length + ' 条作答记录里「哪次测量」对不上现有测量，导出按原文保存，不自动改写。</div>' : '') +
+    '<div class="note">这里记的是研究用的测量与评分，不写回课程成绩。</div>' +
+    activityCard(5);
+}
+function reviewView () {
+  const ids = cardsOf('review');
+  const noMask = ids.filter(id => !isFilled(id, 'mask'));
+  const noBlind = ids.filter(id => !isFilled(id, 'blind'));
+  const leaks = ids.filter(id => isFilled(id, 'leak'));
+  const byFrame = f => ids.filter(id => field(id, 'frame') === f).length;
+  return topbar() +
+    (ids.length ? '<div class="card"><h2>评审框架分布</h2><div class="bd"><div class="row" style="margin-bottom:6px">' +
+      [FRAME.P, FRAME.M, FRAME.T].map(f => '<span class="chip">' + esc(f) + ' <b>' + byFrame(f) + '</b></span>').join('') +
+      '<span class="chip">未标框架 <b>' + ids.filter(id => !field(id, 'frame')).length + '</b></span></div>' +
+      '<div class="note">不把 P3–P6 与 M1–M5 合成同一个总分；没标框架的条目不算进任何一类。</div></div></div>' : '') +
+    cardsSection('review', '评审对象是某个指定快照的整套材料包。首评独立评分并写理由，复核另存一条，不覆盖原始独立评分。') +
+    (noMask.length ? '<div class="warn">' + noMask.length + ' 条评审没写实际遮蔽措施，导出时标为无法判断盲评程度。</div>' : '') +
+    (noBlind.length ? '<div class="warn">' + noBlind.length + ' 条评审没记首评是否独立，读不出是否被他人结果影响。</div>' : '') +
+    (leaks.length ? '<div class="note">有 ' + leaks.length + ' 条记录了仍然遮不住的线索，研究包导出前要人工复查。</div>' : '') +
+    '<div class="note">这里保存的是研究评分，与课程成绩是两种记录；本窗口不会改动任何成绩。</div>' +
+    activityCard(5);
+}
+let pkgCache = null;
+const PKG_STATUS = { ok: ['生成', 'ok'], notenabled: ['未启用', 'wait'], notcollected: ['未采集', ''] };
+function pkgTag (st) { const s = PKG_STATUS[st] || ['—', '']; return '<span class="tag ' + s[1] + '">' + s[0] + '</span>'; }
+function exportView () {
+  pkgCache = pkgBuild();
+  const f = db.filters, g = pkgCache.groups, pk = pkgCache;
+  const on = (f.plan ? 1 : 0) + ((f.from || f.to) ? 1 : 0) + (f.classes.length ? 1 : 0) + (f.tasks.length ? 1 : 0) + (f.round ? 1 : 0) + (f.snap ? 1 : 0);
+  const chip = (dim, o) => '<label class="chip"><input type="checkbox" data-fset="' + dim + '" data-opt="' + esc(o) + '"' +
+    ((f[dim] || []).includes(o) ? ' checked' : '') + '>' + esc(o) + '</label>';
+  const sel = (k, label, opts, ph) => '<div><label for="flt-' + k + '">' + esc(label) + '</label><select id="flt-' + k + '" data-f="' + k + '">' +
+    '<option value="">' + esc(ph) + '</option>' + opts.map(o => '<option value="' + esc(o) + '"' + (f[k] === o ? ' selected' : '') + '>' + esc(o) + '</option>').join('') +
+    '</select></div>';
+  const shown = pk.detail.filter(r => ui.expShow === 'all' || r.s !== 'in');
+  const leaks = pk.detail.filter(r => r.leaks && r.leaks.length);
+  const noAnon = cardsOf('person').filter(id => !isFilled(id, 'anon'));
+  const sameUnit = snapUnitCounts().map(u => u.unit);
+  const noPull = pk.matSc.rows.filter(r => !r.raw.extracted).length;
+  const leakOpen = leaks.filter(r => r.s !== 'out');
+  const revDone = leakOpen.filter(r => r.reviewed).length;
+  const cnt = test => [leakOpen.filter(r => test(r.leaks)).length, leakOpen.filter(r => !r.reviewed && test(r.leaks)).length];
+  const NAME = x => x.some(y => y.indexOf('成员姓名') === 0), ID = x => x.some(y => /学号|联系方式/.test(y));
+  const UNIT = x => x.some(y => y.indexOf('主题「') === 0);
+  const nameC = cnt(NAME), idC = cnt(ID), unitC = cnt(UNIT);
+  const revTag = c => c[1] ? 'wait' : c[0] ? 'ok' : '';
+  const revRes = (c, det) => c[1] ? '要处理' : c[0] ? '都已复核' : det;
+  const revCell = r => {
+    if (!r.leaks || !r.leaks.length) return '<span class="note" style="margin:0">不涉及身份线索</span>';
+    if (r.s === 'out') return '<span class="note" style="margin:0">已按维度排除，不需要复核</span>';
+    if (r.reviewed) return '<span class="tag ok">已复核</span> <span class="note" style="margin:0">' + esc(r.reviewed.by) + ' · ' + fmtDay(r.reviewed.at) + '</span>' +
+      '<div class="row" style="margin-top:6px"><button class="btn sm" data-act="rev-undo" data-rk="' + esc(r.key) + '">撤销复核</button></div>';
+    return '<button class="btn sm" data-act="rev-ok" data-rk="' + esc(r.key) + '">已人工复核，纳入本批</button>';
+  };
+  const bad = v => v ? 'wait' : 'ok';
+  const checks = [
+    ['参与者是否都用匿名编号', bad(noAnon.length),
+      noAnon.length ? '要处理' : cardsOf('person').length ? '没有缺编号' : '没有参与者记录',
+      noAnon.length ? noAnon.length + ' 条参与者还没填匿名编号，这些条目在待复核清单里已经带出'
+        : (cardsOf('person').length ? cardsOf('person').length + ' 条参与者都有匿名编号' : '还没有参与者记录，匿名编号要在登记参与者时填')],
+    ['记录正文里是否出现成员姓名', revTag(nameC), revRes(nameC, pk.all ? '没有检出' : '没有可检记录'),
+      '检查依据是 ' + ROSTER_SINCE + ' 确认名单的 ' + headCount() + ' 人加两个学生窗口登记的成员（本机小组卡上的成员列不算，那一列只留本机、不进包）' +
+      (nameC[0] ? '；共 ' + nameC[0] + ' 条，其中 ' + nameC[1] + ' 条还没人工复核' : '')],
+    ['是否出现「学号」、长编号或联系方式', revTag(idC), revRes(idC, pk.all ? '没有检出' : '没有可检记录'),
+      '命中项一律进待复核，不自动删字符，也不自动改写原文' + (idC[0] ? '；共 ' + idC[0] + ' 条，其中 ' + idC[1] + ' 条还没人工复核' : '')],
+    ['两轮作品是否可能靠主题互相认出', sameUnit.length ? revTag(unitC) : 'ok',
+      revRes(unitC, ref.snaps.length ? '没有重复主题' : '还没有快照'),
+      sameUnit.length ? '主题「' + esc(short(sameUnit.join('、'), 30)) + '」出现在多个快照里，跨轮次可能被认出；共 ' + unitC[0] +
+        ' 条记录带出该主题，其中 ' + unitC[1] + ' 条还没人工复核' : (ref.snaps.length ? ref.snaps.length + ' 个快照登记的主题互不相同' : '还没有作品快照，要有跨轮次的快照才检得出这个风险')],
+    ['外部材料是链接还是原文', bad(noPull), pk.matSc.all ? (noPull ? '要处理' : '都已提取') : '没有材料记录',
+      '只登记了位置与读取限制的材料不进包（materials_index.csv 标 not_included），当前 ' + pk.matSc.all + ' 条里有 ' + noPull + ' 条未提取'],
+    ['身份对应表与账号凭据', 'ok', '不随包', '这两样不生成；要去标识对应表只能在受限界面单独做'],
+    ['带身份线索的条目是否都处理完', leakOpen.length === revDone ? 'ok' : 'wait',
+      leakOpen.length ? (revDone === leakOpen.length ? '都已复核' : '还有 ' + (leakOpen.length - revDone) + ' 条待复核') : '没有待处理线索',
+      '带线索又没被维度排除的条目共 ' + leakOpen.length + ' 条，其中已人工复核纳入 ' + revDone +
+      ' 条。复核标记按记录存人和时间，写进 manifest.json 的 manual_review']
+  ];
+  return topbar() +
+    '<div class="card"><h2>一 选取范围</h2><div class="bd">' +
+    '<div class="grid">' + sel('plan', '方案版本', uniq(cardsOf('plan').map(id => field(id, 'ver')).concat([ref.ver])), '不限（全部方案版本）') +
+    sel('round', '轮次', dimUniverse('round'), '不限（全部轮次）') +
+    sel('snap', '快照', dimUniverse('snap'), '不限（全部快照）') +
+    '<div><label for="flt-from">时间范围起</label><input type="date" id="flt-from" data-f="from" value="' + esc(f.from) + '"></div>' +
+    '<div><label for="flt-to">时间范围止</label><input type="date" id="flt-to" data-f="to" value="' + esc(f.to) + '"></div></div>' +
+    '<label>班级</label><div class="chips">' + (classesList().length ? classesList().map(o => chip('classes', o)).join('') : '<span class="miss">还没有班级，先在「班级与组队」登记</span>') + '</div>' +
+    '<label>任务</label><div class="chips">' + TASKS_ALL.map(o => chip('tasks', o)).join('') + '</div>' +
+    '<div class="row" style="margin-top:14px"><button class="btn" data-act="flt-reset">清除全部筛选</button>' +
+    '<span class="note" style="margin:0">' + (on ? '已启用 ' + on + ' 个筛选条件。' : '没有筛选条件，本批覆盖本机与学生窗口的全部记录。') + '</span></div>' +
+    '<div class="note">判定规则：命中选定值→纳入；提到同维度的其他值→排除；记录里没有这个维度或日期判不出→待复核。</div></div></div>' +
+
+    '<div class="card"><h2>二 纳入与排除预览</h2><div class="bd">' +
+    '<table><thead><tr><th>对象</th><th>本机与学生窗口共</th><th>纳入</th><th>排除</th><th>待复核</th></tr></thead><tbody>' +
+    g.map(([label, x]) => '<tr><td>' + esc(label) + '</td><td>' + x.all + '</td><td>' + x.kept.length + '</td>' +
+      '<td>' + (x.out.length ? '<span class="tag bad">' + x.out.length + '</span>' : '0') + '</td>' +
+      '<td>' + (x.review.length ? '<span class="tag wait">' + x.review.length + '</span>' : '0') + '</td></tr>').join('') +
+    '</tbody></table>' +
+    '<div class="note">合计 ' + pk.all + ' 条：纳入 ' + pk.kept + '，排除 ' + pk.out + '，待复核 ' + pk.review +
+    '；排除只影响这一批，原文不动。</div>' +
+    '<div class="row" style="margin-top:10px"><button class="btn" data-act="exp-show">' +
+    (ui.expShow === 'all' ? '只看需要处理的条目' : '查看全部条目判定') + '</button></div>' +
+    (shown.length ? '<table style="margin-top:10px"><thead><tr><th>对象</th><th>编号</th><th>判定</th><th>原因</th><th>人工复核</th></tr></thead><tbody>' +
+      shown.slice(0, 80).map(r => '<tr><td>' + esc(r.grp) + '</td><td><b>' + esc(r.key) + '</b>' +
+        (r.title && r.title !== r.key ? ' ' + esc(short(r.title, 24)) : '') + '</td>' +
+        (r.s === 'in' ? '<td><span class="tag ok">纳入</span></td><td>' + (r.why.length ? esc(r.why.join('；')) : '各维度都命中') + '</td>'
+          : r.s === 'out' ? '<td><span class="tag bad">排除</span></td><td>' + esc(r.why.join('；')) + '</td>'
+          : '<td><span class="tag wait">待复核</span></td><td>' + esc(r.why.join('；')) + '</td>') +
+        '<td>' + revCell(r) + '</td></tr>').join('') +
+      '</tbody></table>' + (shown.length > 80 ? '<div class="note">只列出前 80 条，共 ' + shown.length + ' 条。</div>' : '')
+      : '<div class="empty" style="margin-top:10px"><b>' + (pk.all ? '这一批没有需要人工处理的条目' : '还没有可读的记录') + '</b><span>' +
+        (pk.all ? pk.all + ' 条记录都纳入。' : '分对象文件会标「未采集」并写明原因，README、manifest 与 codebook 仍然生成。') + '</span></div>') +
+    '<div class="note">「已人工复核，纳入本批」只改这一批的取舍，不动原文；人和时间写进 manifest.json。' +
+    '维度判不出的条目不能靠这个按钮放行。</div>' +
+    '</div></div>' +
+
+    '<div class="card"><h2>三 匿名化与权限检查</h2><div class="bd">' +
+    '<table><thead><tr><th>检查项</th><th>结论</th><th>说明</th></tr></thead><tbody>' +
+    checks.map(c => '<tr><td>' + esc(c[0]) + '</td><td><span class="tag ' + c[1] + '">' + esc(c[2]) + '</span></td><td>' + c[3] + '</td></tr>').join('') +
+    '</tbody></table>' +
+    (leaks.length ? '<table style="margin-top:10px"><thead><tr><th>对象</th><th>编号</th><th>检出的线索</th><th>这一批的处理</th></tr></thead><tbody>' +
+      leaks.map(r => '<tr><td>' + esc(r.grp) + '</td><td><b>' + esc(r.key) + '</b></td><td>' + esc(r.leaks.join('；')) + '</td>' +
+        '<td>' + (r.s === 'out' ? '已按维度排除'
+          : r.s === 'in' ? '<span class="tag ok">复核后纳入</span> <span class="note" style="margin:0">' + esc(r.reviewed.by) + ' · ' + fmtDay(r.reviewed.at) + '</span>'
+          : '<span class="tag wait">待复核</span>') + '</td></tr>').join('') +
+      '</tbody></table><div class="note">这里只报线索，不自动删字符，也没有权限判断；放行用「纳入与排除预览」里的「已人工复核，纳入本批」。</div>' : '') +
+    (ME === '外部评审者' ? '<div class="note">这一批里带身份线索的内容没有对你藏起来。</div>' : '') +
+    '</div></div>' +
+
+    '<div class="card"><h2>四 研究包结构</h2><div class="bd">' +
+    (pk.mismatch.length ? '<div class="warn">对不上：' + esc(pk.mismatch.join('、')) +
+      '。正文条数与界面计数不一致，先别用这一批，检查完再导出。</div>' : '') +
+    '<table><thead><tr><th>文件</th><th>状态</th><th>正文条数</th><th>界面计数</th><th>对账</th><th>内容</th><th></th></tr></thead><tbody>' +
+    pk.files.map((e, i) => '<tr><td><b>' + esc(e.f) + '</b></td><td>' + pkgTag(e.status) + '</td>' +
+      '<td>' + (e.shape === 'doc' || e.records == null ? '—' : e.records) + '</td><td>' + (e.expect == null ? '—' : e.expect) + '</td>' +
+      '<td>' + (e.expect == null ? '<span class="note" style="margin:0">' + (e.status === 'ok' ? '不计数' : '不适用') + '</span>'
+        : e.records === e.expect ? '<span class="tag ok">一致</span>' : '<span class="tag bad">不一致</span>') + '</td>' +
+      '<td>' + esc(e.status === 'ok' ? e.note : e.status_note) + '</td>' +
+      '<td>' + (e.text ? '<button class="btn sm" data-act="pkg-preview" data-n="' + i + '">预览</button>' : '') + '</td></tr>').join('') +
+    '</tbody></table>' +
+    '<div class="note">「未启用」是本机没有入口或未打开，「未采集」是入口在但还没有记录；研究包只写状态与原因，不生成假条目。</div>' +
+    '<div class="row" style="margin-top:12px"><button class="btn pri" data-act="pkg-log">记录这次导出</button>' +
+    '<button class="btn" data-act="pkg-preview" data-n="1">看 manifest.json</button>' +
+    '<button class="btn" data-act="pkg-dl" data-n="1">下载 manifest.json</button>' +
+    '<button class="btn" data-act="notes">本机工作记录（Markdown／JSON）</button></div>' +
+    '<div class="note">这里不能打成 zip，预览框里可逐个文件复制或下载；「记录这次导出」只存清单与计数，不存正文。</div></div></div>' +
+
+    '<div class="card"><h2>五 导出批次</h2><div class="bd">' +
+    (db.exports.length ? '<table><thead><tr><th>批次号</th><th>时间</th><th>身份</th><th>范围</th><th>文件／条数</th><th>待复核</th><th>复核纳入</th><th>对账</th></tr></thead><tbody>' +
+      db.exports.map(b => '<tr><td><b>' + esc(b.code) + '</b></td><td>' + fmtTime(b.at) + '</td><td>' + esc(b.by) + '</td>' +
+        '<td>' + esc(b.scope) + '</td><td>' + b.files + '／' + b.records + '</td><td>' + b.review + '</td>' +
+        '<td>' + (b.reviewed || 0) + '</td>' +
+        '<td>' + (b.mismatch ? '<span class="tag bad">' + esc(b.mismatch) + '</span>' : '<span class="tag ok">一致</span>') + '</td></tr>').join('') +
+      '</tbody></table>' : '<div class="empty"><b>还没有导出批次</b><span>批次号唯一，重复导出会生成新批次。</span></div>') +
+    '<div class="note">每批存的是当时的范围、状态与条数；正文按最新内容重算，批次不是可回溯的原始文件。</div></div></div>' +
+    activityCard(5);
+}
+function stashCard () {
+  const ids = Object.keys(db.stash || {}); if (!ids.length) return '';
+  return '<div class="card"><h2>已移除</h2><div class="bd">' + ids.map(id => {
+    const n = typeName(id);
+    return '<div class="row"><span class="tag">' + esc(id) + '（' + esc(n ? CFG[n].word : '记录') + '）于 ' + fmtTime(db.stash[id].at) + ' 被 ' + esc(db.stash[id].by) + ' 移除</span>' +
+      '<button class="btn sm" data-undo="' + id + '">撤销</button></div>';
+  }).join('') +
+    '<div class="note">移除的内容连相关发放记录一起暂存，撤销后回到原来的列表。</div></div></div>';
+}
+function activityCard (n) {
+  return '<div class="card"><h2>本机记录</h2><div class="bd">' +
+    (db.activity.length ? '<table><tbody>' + db.activity.slice(0, n).map(a => '<tr><td>' + fmtTime(a.at) + '</td><td>' + esc(a.by) + '</td><td>' + esc(a.text) + '</td></tr>').join('') + '</tbody></table>'
+      : '<div class="empty"><b>还没有操作记录</b></div>') +
+    '<div class="note">批量粘贴记为一次编辑，不据此推断文本由谁独立创作；不采集与任务无关的屏幕和键盘活动。</div>' +
+    '</div></div>';
+}
+
+/* ---------- 导出 ---------- */
+function exportModel () {
+  const o = {};
+  CARDS.forEach(name => o[name] = cardsOf(name).map(id => {
+    const f = {}; CFG[name].fields.forEach(x => {
+      const v = field(id, x.k);
+      // 空值本身没有“录入者”：谁记下空值原因，来源就记谁
+      const m = v ? (meta(id + '.' + x.k) || {})
+                   : (meta(id + '.' + x.k + '.__miss') || meta(id + '.' + x.k) || {});
+      f[x.l] = { value: v, 空值原因: v ? '' : (missOf(id, x.k) || MISSING.blank),
+        来源: SOURCE[m.src] || m.src || '', 记录人: m.by || '', 记录时间: m.at ? fmtTime(m.at) : '' };
+    });
+    return { id: id, 标题: titleOf(name, id), 已被取代: get(id + '.replaced_by') || '', 另存自: get(id + '.from') || '',
+      创建: db.createdBy[id] ? fmtTime(db.createdBy[id].at) : '', fields: f };
+  }));
+  return o;
+}
+function missingCount () {
+  let n = 0, byReason = {};
+  CARDS.forEach(name => cardsOf(name).forEach(id => CFG[name].fields.forEach(f => {
+    if (isFilled(id, f.k)) return;
+    n++; const r = missOf(id, f.k) || MISSING.blank; byReason[r] = (byReason[r] || 0) + 1;
+  })));
+  return { n, byReason };
+}
+function mdOut () {
+  const mc = missingCount();
+  const L = ['# 研究管理记录（本机）', '',
+    '- 导出时间：' + fmtTime(now()),
+    '- 身份：' + ME + '（身份切换不是登录）',
+    '- 数据来源：' + ref.from + '；' + (ref.name || '未读到小组'),
+    '- 内容性质：以下教师登记与配置的内容来自本窗口；「学生窗口读到的记录」一节读自学生两个窗口的本机存储，标为「学生填写」，本窗口只读不改。全部不含推断结论。', ''];
+  [['plan', '研究安排'], ['cond', '比较条件'], ['scaf', '支架与发放'], ['group', '小组'], ['memberlog', '成员调整'], ['person', '参与者与背景'],
+    ['msr', '个人测量'], ['mres', '个人作答与评分'], ['review', '作品评审']].forEach(([name, label]) => {
+    L.push('## ' + label, '');
+    if (!o0(name).length) { L.push('- ' + MISSING.blank + '（没有添加任何' + CFG[name].word + '记录）', ''); return; }
+    o0(name).forEach(id => {
+      L.push('- **' + id + '** ' + titleOf(name, id) + (db.createdBy[id] && db.createdBy[id].by === '示例数据' ? '（示例数据）' : '') + (get(id + '.replaced_by') ? '（已被 ' + get(id + '.replaced_by') + ' 取代，只读）' : ''));
+      CFG[name].fields.forEach(f => { const v = field(id, f.k);
+        L.push('    - ' + f.l + '：' + (v || '（空值原因：' + (missOf(id, f.k) || MISSING.blank) + '）')); });
+    });
+    L.push('');
+  });
+  L.push('## 支架使用事件', '');
+  if (!db.events.length) L.push('- ' + MISSING.uncollect + '（学生端打开与展开依赖服务端日志，尚未接入）');
+  else db.events.slice().sort((a, b) => a.at - b.at).forEach(e => L.push('- ' + fmtTime(e.at) + '｜' + (EVENTS[e.kind] || e.kind) + '｜' + (e.who || NODATA) +
+    '｜' + (e.scaf || NODATA) + (e.ver ? ' ' + e.ver : '') + '｜' + (e.task || NODATA) + '｜来源：' + (SOURCE[e.src] || e.src || NODATA)));
+  L.push('', '## 学生窗口读到的记录（只读，不回写）', '');
+  if (!ref.decisions.length && !ref.answers.length) L.push('- ' + MISSING.uncollect + '（两个学生窗口还没有保存关键决定记录，也没有个人任务作答）');
+  ref.decisions.forEach(d => L.push('- 决定 ' + d.id + '｜' + (d.from || '') + '｜记在：' + (d.target_label || NODATA) +
+    '｜问题：' + (d.problem || NODATA) + '｜决定：' + (d.decision || NODATA) + '｜依据：' + (d.reason || NODATA) +
+    '｜依据来源：' + ((d.sources || []).join('、') || '未选') + '｜' + decTimingOf(d) +
+    '｜记录人：' + (d.by || NODATA) + '｜来源：' + (d.src || '学生填写')));
+  ref.answers.forEach(a => L.push('- 作答 ' + a.id + '｜' + (a.from || '') + '｜测量 ' + (a.msr || NODATA) + ' ' + (a.msr_name || '') +
+    '｜状态：' + (a.state || '未选') + '｜内容：' + (a.answer || NODATA) +
+    '｜提交：' + (a.sent_at ? fmtTime(a.sent_at) : '没有标记过提交') + '｜独立作答：' + (a.solo_self || '未约定') +
+    '｜填写人：' + (a.by || NODATA) + '（本机自报，不等于登录）｜来源：学生填写'));
+  if (ref.legacy) L.push('- 另有 ' + ref.legacy + ' 条早期版本留下的记录，字段结构与现在不同，不列在上面，也不当成决策。');
+  L.push('', '## 开放与权限', '');
+  if (!db.grants.length) L.push('- ' + MISSING.not_happn + '（还没有支架被实际开放）');
+  else db.grants.forEach(g => L.push('- ' + fmtTime(g.at) + '｜' + g.scaf + ' ' + g.ver + '｜对象：' + g.to + '｜操作者：' + g.by +
+    '｜权限判断需要在服务端实现，前端隐藏不算'));
+  L.push('', '## 缺失与统计', '', '- 空值合计：' + mc.n + ' 处',
+    '- 按原因：' + (Object.entries(mc.byReason).map(([k, v]) => k + ' ' + v + ' 处').join('；') || '无'),
+    '- 研究安排版本：' + cardsOf('plan').length + ' 条（其中只读 ' + cardsOf('plan').filter(id => get(id + '.replaced_by')).length + ' 条）',
+    '- 支架：' + cardsOf('scaf').length + ' 条；事件：' + db.events.length + ' 条',
+    '- 学生窗口读到：关键决定 ' + ref.decisions.length + ' 条；个人任务作答 ' + ref.answers.length + ' 条；早期版本遗留 ' + ref.legacy + ' 条（不计入上面两项）', '',
+    '## 边界', '',
+    '- 未接入登录、服务端存储、真实权限与跨设备协作；支架的打开与展开要接服务端日志。',
+    '- 教师端入口靠本机管理密码，文件被复制后这道门不成立；管理密码值不落文件，只存校验值。',
+    '- 学生窗口的内容只读：本窗口的保存与导出不改动学生数据；个人任务作答属于个人，不随展示版快照冻结；学生姓名是各人本机自报，未经登录验证。',
+    '- 平台不认定教学方法有效、个人能力提高或模型已经建立；研究分组与测量安排由教师确认。',
+    '- 三类人员分开：课程教师、研究导出人员、外部评审者各取所需数据，外部评审者不查身份对应表。',
+    '- 编辑次数、对话条数、学习单数量不作为独立样本量。',
+    '- 课程成绩与研究评分是两种记录，本文件不改课程成绩。',
+    '- 服务端时间与用户自报发生时间分开保存，时区按本机 ' + Intl.DateTimeFormat().resolvedOptions().timeZone + '。',
+    '- 本文件是不带筛选的原始记录快照；按范围筛选、匿名化检查与研究包结构在「研究导出」页面生成。');
+  return L.join('\n');
+}
+function o0 (name) { return cardsOf(name); }
+function jsonOut () {
+  const mc = missingCount();
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    tool: '支点课堂研究管理原型 v17 · ' + DB_KEY,
+    identity: { me: ME, note: '身份切换不是登录，未接入账号体系' },
+    source: ref.from,
+    group: { className: ref.cls, groupNo: ref.groupNo, groupName: ref.name, members: ref.members,
+      subject: ref.subject, platform: ref.plat, version: ref.ver },
+    dataNature: '教师与研究人员在本机登记与配置的内容，加上从两个学生窗口只读到的关键决定记录与个人任务作答，不含推断结论',
+    objects: exportModel(),
+    grants: db.grants, events: db.events, extraContacts: cardsOf('extra').map(id => id),
+    decisionsFromStudentWindows: ref.decisions.map(d => Object.assign({ source_type: d.src || '学生填写' }, d)),
+    personalAnswersFromStudentWindows: ref.answers.map(a => Object.assign({ source_type: a.src || '学生填写' }, a)),
+    earlyVersionRecordsSkipped: ref.legacy,
+    missing: mc,
+    boundaries: [
+      '未接入登录、服务端存储、真实权限与跨设备协作',
+      '教师端入口靠本机管理密码，文件被复制后这道门不成立；管理密码值不落文件，只存校验值',
+      '学生窗口只读：本窗口不写回学生数据；个人作答不随展示版快照冻结；学生姓名是各人本机自报',
+      '不认定教学方法有效、能力提高或模型已验证；分组与测量由教师确认',
+      '研究评分与课程成绩分开记录，本文件不改课程成绩',
+      '打开与展开不证明理解或采用；支架相邻不构成因果',
+      '身份对应表与账号凭据不进研究包；匿名编号需检查文件名、自由文本与附件',
+      '编辑次数、对话条数、学习单数量不是样本量',
+      '服务端时间与自报发生时间分开保存'
+    ]
+  }, null, 2);
+}
+function exportText (fmt) { ref = readRef(); return fmt === 'json' ? jsonOut() : mdOut(); }
+
+/* ---------- 研究导出：先筛选，再预览纳入与排除 ---------- */
+const TASKS_ALL = ['第三周平台开发', '第六周教学设计', '后续修订与展示'];
+const DIM_LABEL = { plan: '方案版本', classes: '班级', tasks: '任务', round: '轮次', time: '时间范围', snap: '快照' };
+const PKG_SCHEMA = 'v17-research-package-1';
+const uniq = a => Array.from(new Set((a || []).filter(Boolean)));
+
+function recText (name, id) {
+  return titleOf(name, id) + ' ｜ ' + CFG[name].fields.map(f => {
+    /* 受限字段：判定与预览用的是人数，姓名只留在本机卡片上 */
+    if (f.local) { const n = namesOf(field(id, f.k)).length; return n ? n + ' 人（姓名留本机）' : ''; }
+    return field(id, f.k) + (missOf(id, f.k) ? '（' + missOf(id, f.k) + '）' : '');
+  }).join(' ｜ ');
+}
+function dimUniverse (dim) {
+  if (dim === 'classes') return classesList();
+  if (dim === 'tasks') return TASKS_ALL;
+  if (dim === 'plan') return uniq(cardsOf('plan').map(id => field(id, 'ver')).concat([ref.ver]));
+  if (dim === 'round') return uniq(ref.snaps.map(s => s.round));
+  if (dim === 'snap') return uniq(ref.snaps.map(s => s.code));
+  return [];
+}
+function dimWanted (dim) {
+  const f = db.filters;
+  if (dim === 'classes' || dim === 'tasks') return f[dim] || [];
+  if (dim === 'plan') return f.plan ? [f.plan] : [];
+  if (dim === 'round') return f.round ? [f.round] : [];
+  if (dim === 'snap') return f.snap ? [f.snap] : [];
+  return [];
+}
+/* 命中→纳入；提到过该维度的别的值→排除；这条记录里根本没有这个维度→待复核，不默认纳入也不默认排除 */
+function dimJudge (dim, text) {
+  const want = dimWanted(dim); if (!want.length) return 'na';
+  if (want.some(v => text.indexOf(v) >= 0)) return 'in';
+  return dimUniverse(dim).some(v => text.indexOf(v) >= 0) ? 'out' : 'unknown';
+}
+function timeJudge (text) {
+  const f = db.filters; if (!f.from && !f.to) return 'na';
+  const days = text.match(/\d{4}-\d{2}-\d{2}/g) || [];
+  if (!days.length) return 'unknown';
+  return days.some(d => (!f.from || d >= f.from) && (!f.to || d <= f.to)) ? 'in' : 'out';
+}
+function snapUnitCounts () {
+  const n = {}; (ref.snaps || []).forEach(s => { if (s.unit) n[s.unit] = (n[s.unit] || 0) + 1; });
+  return Object.keys(n).filter(u => n[u] > 1).map(u => ({ unit: u, n: n[u] }));
+}
+function leakHits (text, studentSide) {
+  const hits = [];
+  /* 名单确认后检的不再只是当前这一组的三个人：本机 8 组登记过的人名与确认名单都算 */
+  const known = uniq(rosterNames().concat(ref.members || [])
+    .concat(cardsOf('group').reduce((a, id) => a.concat(namesOf(field(id, 'who'))), [])));
+  known.forEach(m => { if (m && text.indexOf(m) >= 0) hits.push('成员姓名「' + m + '」'); });
+  SUSPECT_NAMES.forEach(m => { if (text.indexOf(m) >= 0)
+    hits.push('身份不明的人名「' + m + '」（不在 ' + ROSTER_SINCE + ' 确认名单里，也不带「示例」字样）'); });
+  // 跨轮次靠主题认出，是学生作品那一侧的风险；主题只出现过一次时不构成认出
+  if (studentSide) snapUnitCounts().forEach(u => { if (u.unit && text.indexOf(u.unit) >= 0)
+    hits.push('主题「' + u.unit + '」在 ' + u.n + ' 次快照里重复，两版作品可能被认出'); });
+  if (/学号[：:]?\s*[A-Za-z0-9-]{4,}/.test(text)) hits.push('「学号」后面跟着具体编号');
+  const bare = text.replace(/\d{4}-\d{2}-\d{2}/g, ' ').replace(/\b(19|20)\d{6}\b/g, ' ').replace(/\b\d{10,13}\b/g, ' ');
+  const num = bare.match(/\d{8,}/); if (num) hits.push('疑似学号或长编号 ' + num[0].slice(0, 12));
+  const mail = text.match(/[\w.+-]+@[\w-]+\.\w+/); if (mail) hits.push('联系方式 ' + mail[0]);
+  return hits;
+}
+function classify (text, key, studentSide) {
+  const st = [['plan', dimJudge('plan', text)], ['classes', dimJudge('classes', text)],
+    ['tasks', dimJudge('tasks', text)], ['round', dimJudge('round', text)], ['time', timeJudge(text)]]
+    .filter(x => x[1] !== 'na');
+  const outs = st.filter(x => x[1] === 'out'), unks = st.filter(x => x[1] === 'unknown');
+  const leaks = leakHits(text, studentSide), rv = (key && db.reviewed[key]) || null;
+  const unkWhy = unks.map(x => DIM_LABEL[x[0]] + '无法判定：这条记录里没有该维度的任何取值');
+  if (outs.length) return { s: 'out', leaks, reviewed: rv, why: outs.map(x => DIM_LABEL[x[0]] + '不在选定范围') };
+  if (leaks.length && !rv) return { s: 'review', leaks, reviewed: rv, why: ['仍带身份线索，先复核再纳入'].concat(leaks, unkWhy) };
+  if (unks.length) return { s: 'review', leaks, reviewed: rv,
+    why: unkWhy.concat(rv && leaks.length ? ['身份线索已复核，但上面这些维度仍判不出，复核不能代替筛选'] : []) };
+  return { s: 'in', leaks, reviewed: rv,
+    why: rv && leaks.length ? ['身份线索已人工复核，纳入本批（' + rv.by + ' · ' + fmtDay(rv.at) + '）'] : [] };
+}
+function scopeRows (list, textOf, keyOf, studentSide) {
+  const rows = list.map((o, i) => { const k = keyOf(o, i);
+    return Object.assign({ key: k, i, raw: o }, classify(textOf(o), k, studentSide)); });
+  return { rows, all: rows.length, kept: rows.filter(r => r.s === 'in'),
+    out: rows.filter(r => r.s === 'out'), review: rows.filter(r => r.s === 'review') };
+}
+function scope (name) {
+  const sc = scopeRows(cardsOf(name), id => recText(name, id), id => id, false);
+  sc.rows.forEach(r => { r.id = r.key; r.name = name; });
+  sc.kept = sc.rows.filter(r => r.s === 'in');
+  sc.out = sc.rows.filter(r => r.s === 'out');
+  sc.review = sc.rows.filter(r => r.s === 'review');
+  return sc;
+}
+function refScope (list, textOf, atOf, keyOf, studentSide) {
+  return scopeRows(list, o => textOf(o) + (atOf(o) ? ' ' + fmtDay(atOf(o)) : ''),
+    (o, i) => (keyOf ? keyOf(o, i) : '') || o.code || o.id || o.name || ('#' + (i + 1)), studentSide);
+}
+
+function csvCell (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function csv (head, rows) {
+  return '\ufeff' + head.map(csvCell).join(',') + '\n' + rows.map(r => r.map(csvCell).join(',')).join('\n') +
+    (rows.length ? '\n' : '');
+}
+function csvLong (name, kept) {
+  const head = ['对象编号', '界面标题', '字段代码', '字段标签', '值', '空值原因', '来源类型', '记录人', '记录时间', '服务器记录时间'];
+  const rows = [];
+  kept.forEach(r => CFG[name].fields.forEach(f => {
+    const raw = field(r.id, f.k), m = meta(r.id + '.' + f.k) || {}, mm = meta(r.id + '.' + f.k + '.__miss') || {};
+    /* 受限字段带人数进包，姓名不带；没登记过的人数据实写未采集，不算「留本机」 */
+    const v = !f.local ? raw
+      : (namesOf(raw).length ? namesOf(raw).length + ' 人已登记，姓名留本机' : 'notcollected');
+    rows.push([r.id, titleOf(name, r.id), f.k, f.l, v, v ? '' : (get(missKey(r.id, f.k)) || 'blank'),
+      m.src || '', m.by || '', m.at ? fmtTime(m.at) : '', 'uncollect']);
+    if (mm.at) rows.push([r.id, titleOf(name, r.id), f.k + '.__miss', f.l + ' 的空值原因', get(missKey(r.id, f.k)),
+      '', mm.src || '', mm.by || '', fmtTime(mm.at), 'uncollect']);
+  }));
+  return csv(head, rows);
+}
+function jsonObjs (arr) { return JSON.stringify(arr, null, 2) + '\n'; }
+function fieldsOf (name, id) {
+  const o = {}; CFG[name].fields.forEach(f => { const m = meta(id + '.' + f.k) || {};
+    o[f.k] = { value: field(id, f.k), missing_reason: field(id, f.k) ? '' : (get(missKey(id, f.k)) || 'blank'),
+      source_type: m.src || '', recorded_by: m.by || '', recorded_at: m.at ? new Date(m.at).toISOString() : '',
+      server_time: null, server_time_reason: 'uncollect' }; });
+  return { id, title: titleOf(name, id), replaced_by: get(id + '.replaced_by') || '', saved_from: get(id + '.from') || '', fields: o };
+}
+
+function codebookRows () {
+  const miss = Object.keys(MISSING).map(k => k + '=' + MISSING[k]).join(' / ');
+  const rows = [];
+  CARDS.forEach(name => CFG[name].fields.forEach(f => rows.push([name, CFG[name].store, f.k, f.l, f.t,
+    (f.opts || []).concat(f.from ? ['（取自 ' + f.from + ' 现有记录）'] : []).join(' / '),
+    f.miss ? miss : '不单独记空值原因', f.req ? '必填' : '可空', f.ph || ''])));
+  rows.push(['__事件类型', 'scaffold_events', 'kind', '支架交互事件类型', 'sel', Object.values(EVENTS).join(' / '), '', '', '四类分开，不合并成「已使用」']);
+  rows.push(['__保存节点', 'artifact_snapshots', 'node', '计划保存节点', 'sel', Object.values(NODES).join(' / '), '', '', '按任务启用，不要求每组凑齐']);
+  rows.push(['__来源类型', '所有对象', 'source_type', '值是怎么进来的', 'sel', Object.values(SOURCE).join(' / '), '', '', '外部导入、事后补记、学生填写、系统事件、AI 生成、研究者编码、演示操作、研究者登记。本原型不再生成演示记录，该类型只保留代码位；读自学生窗口的记录保留学生端原标签']);
+  rows.push(['__空值原因', '所有对象', 'missing_reason', '为什么是空的', 'sel', miss, '', '', '缺失照常导出，不补造数据，不把空值填成零']);
+  /* 学生两个窗口读来的两类记录：字段由学生端产生，本包只读不改 */
+  const STD = '读自学生窗口', OPT = ['', '文本', '数组', '时间', '标记'].join(' / ');
+  [['record_code', '本包内条号', '按筛选后的顺序生成；两个学生窗口各自从 D01 起号，本包重新编号避免撞号'],
+    ['student_side_code', '学生端编号', '学生在自己窗口里看到的编号，只在本窗口内唯一'],
+    ['from_window', '来源窗口', '平台开发工作台／教学设计工作台'],
+    ['task_label', '所属任务', '学生窗口自己的任务名，用来跟教师端的「挂靠任务」对齐'],
+    ['recorded_to', '记在哪个位置', '学生选的位置名，如「设计功能 F01…」或「第 4 题…」'],
+    ['recorded_to_key', '位置代码', '学生端的内部键，如 acts.A04、Q04'],
+    ['problem', '遇到了什么问题', '学生写的原文，空值不补'],
+    ['decision_made', '最后决定怎样做', '学生写的原文'],
+    ['evidence', '依据是什么', '学生写的原文'],
+    ['empty_field_reason', '三项里哪一项是空的', '上面三问有一项没写就记 blank'],
+    ['evidence_sources', '依据来自', '学生勾选的来源，可多选；只勾来源不代替写依据'],
+    ['participants', '参与决定的人', '学生自填姓名，未登录验证'],
+    ['alternates', '当时还考虑过什么', '选填'],
+    ['check_plan', '打算怎么看出这个决定好不好', '选填'],
+    ['event_time_local', '事件时间', '学生自己填的；没填记 uncollect'],
+    ['timing', '当场还是补记', '由事件时间与本机记录时间算出：≤1 天算当场，超过写「补记（约 N 天）」；填反了写「请核对」'],
+    ['recorded_at_local', '记录时间', '学生浏览器保存那一刻的本机时间'],
+    ['recorded_by', '记录人', '学生本机自报姓名'],
+    ['source_type', '来源类型', '照搬学生窗口存的标签；本包不代学生补内容'],
+    ['server_time / server_time_reason', '服务器时间', '未接服务端，全部 null + uncollect'],
+    ['identity_note', '身份说明', '姓名是本机自报、未经登录验证；早期版本遗留的记录标「不是学生真实填写」'],
+    ['ai_generated', '是否 AI 生成', '恒为 false：本原型没有 AI 代写入口']]
+    .forEach(r => rows.push(['student_decisions', 'decisions.json', r[0], r[1], STD, OPT, '', '可空', r[2]]));
+  [['record_code', '本包内条号', '同上，按筛选后的顺序生成'],
+    ['student_side_code', '学生端编号', '学生窗口里的作答号'],
+    ['measurement_code', '哪次测量', '与 msr 的测量编号关联；测量改名后旧记录不会自动跟过去'],
+    ['measurement_current_title', '当前测量名称', '按编号回本窗口测量列表查到的标题；查不到写 uncollect，不猜'],
+    ['measurement_name_check', '名称是否还是同一个', '学生作答时存的名称与当前标题比对，不一致只提示人工核对，不改写任何一侧'],
+    ['measurement_name_at_record', '作答时看到的测量名', '学生保存那一刻的名称快照'],
+    ['task_label', '所属任务', '教师端「挂靠任务」在作答时点的取值'],
+    ['from_window', '来源窗口', '学生从哪个窗口提交的'],
+    ['self_reported_name', '填写人', '学生本机自报姓名，与匿名编号的对应关系不进本包'],
+    ['answer', '作答原文', '学生写的原文，空值保留 missing_reason'],
+    ['answer_missing_reason', '作答为空的代码', 'blank=还没写；未交不记零分'],
+    ['student_state', '学生端状态', '已提交作答／未提交／技术中断／写下内容但没选提交状态，四态分开'],
+    ['state_note', '状态说明', '学生端选项与教师端「实际完成／退出」不是一套词，不自动对齐'],
+    ['submitted_at_local', '标记提交时间', '只有状态变成「已提交作答」那一刻才写；没标过记 uncollect'],
+    ['first_saved_at_local / last_saved_at_local', '首次与最后保存时间', '草稿保存轨迹，都来自本机时间'],
+    ['worked_alone_self_report', '是否独立作答', '学生自报：按独立作答完成／中途问过组员／未约定'],
+    ['extra_note', '补充说明', '学生选填'],
+    ['teacher_records_same_measurement', '同一测量的教师登记结果', '只列编号与状态，不与本条合并、不互相覆盖；按当前标题没对上写「无」，编号在本窗口找不到写 uncollect，两种情况分开'],
+    ['score', '分数', '固定一句：学生自报里不记分数，分数只走教师端'],
+    ['source_type', '来源类型', '固定为学生填写'],
+    ['server_time / server_time_reason', '服务器时间', '未接服务端，全部 null + uncollect'],
+    ['snapshot_note', '与展示版的关系', '个人作答属于个人，不随展示版快照冻结']]
+    .forEach(r => rows.push(['student_answers', 'individual_assessments.json', r[0], r[1], STD, OPT, '', '可空', r[2]]));
+  return rows;
+}
+function codebookOf () {
+  return csv(['对象', '存储名', '字段代码', '界面标签', '控件', '可选值', '空值原因代码', '必填', '填写提示'], codebookRows());
+}
+
+function readmeOf (files, revUsed, revPending) {
+  const NL = '\n';
+  revUsed = revUsed || []; revPending = revPending || [];
+  const L = ['# 研究包说明（README）', '',
+    '数据结构版本：' + PKG_SCHEMA,
+    '生成时间：' + fmtTime(now()) + '（本机时间，未接服务端时间）',
+    '本包由教师端研究管理原型 v17 在单机浏览器里生成。内容分两部分：教师与研究人员在本窗口登记与配置的事实，以及从两个学生窗口只读到的关键决定记录与个人任务作答。学生记录的来源类型照搬学生窗口存的标签。两者都不含效果推断。', '',
+    '## 一 选取范围', '', JSON.stringify(db.filters, null, 2), '',
+    '筛选规则：命中选定值→纳入；记录里提到过同一维度的其他值→排除；记录里根本没有这个维度→进待复核清单，既不默认纳入也不默认排除。',
+    '匿名线索规则：检出成员姓名、学号或长编号、联系方式、跨轮次重复主题的记录默认进待复核，本包不自动删字符也不改写原文。' +
+    '研究者可逐条标「已人工复核，纳入本批」，标记的人与时间写在 manifest.json 的 manual_review 里。' +
+    '本批带复核标记 ' + revUsed.length + ' 条，仍待复核 ' + revPending.length + ' 条。', '',
+    '## 二 字段与代码', '', '字段含义见 codebook.csv。空值一律保留 missing_reason 代码：' +
+      Object.keys(MISSING).map(k => k + '=' + MISSING[k]).join('、') + '。',
+    '来源类型：' + Object.values(SOURCE).join('、') + '。本包不再生成「演示操作」记录，该类型只保留代码位。', '',
+    '## 三 时间规则', '', '每条取值有记录人、记录时间（本机浏览器时间）。服务器记录时间全部为 uncollect：本原型没有服务端，' +
+    '不能把浏览器时间当成服务器时间，也不能据此判断谁先谁后到秒。', '',
+    '## 四 对象关联', '', '人员用匿名编号（participants.csv），小组用组号、人数、内容领域与生效时间（group_memberships.csv），' +
+    '支架发放一次开放记一行并带发放记录号（scaffold_assignments.csv），交互事件用事件编号（scaffold_events.csv），' +
+    '测量与作答用测量编号＋匿名编号（individual_assessments.json），评审用评审编号＋快照编号（research_ratings.csv / artifact_snapshots.json）。',
+    '作品快照、关键决定记录、学生个人任务作答与协作事件读自学生两个窗口，只读不回写。决定记录用「记在哪个位置」挂到具体题目或卡片上；学生作答用测量编号关联，人名是学生在自己机器上自报的，不等同于匿名编号。' +
+    '作答记录里的「哪次测量」按名称关联，测量改名后旧记录不会自动跟过去，要人工核对；导出按原文保存，不自动改写。', '',
+    '## 五 采集缺口', ''];
+  files.forEach(e => { if (e.status !== 'ok') L.push('- ' + e.f + '：' + e.status_note); });
+  if (!files.some(e => e.status !== 'ok')) L.push('- 本批次没有整类缺失的对象。');
+  L.push('', '## 六 本包不包含', '',
+    '- 身份对应表与账号凭据：不生成也不随包，去标识检查需要时由研究者在受限界面单独做。',
+    '- 组队名单里的成员姓名：小组卡上的成员列只留本机，group_memberships.csv 一行只写人数、内容领域与生效时间。',
+    '- 未经授权的原始材料与附件本体：只在 materials_index.csv 记位置与读取限制，不把外部链接当作已打包原文。',
+    '- 显著性检验、效果结论与因果判断：本包只提供事实记录。', '',
+    '## 七 已知限制', '',
+    '- 单机单文件原型：无登录、无服务端权限、无真实文件上传；「外部评审者」下拉只是记录标记。',
+    '- 支架「打开／展开」的真实日志要接服务端，本窗口不产生这类事件。',
+    '- 决策记录与学生作答读自两个学生窗口的本机存储，只读不回写；入口已实现，但内容多全取决于学生自己写了多少，教师端不代填也不补全，也不生成推断出来的决策。' +
+    (ref.legacy ? '本机另有 ' + ref.legacy + ' 条早期版本留下的记录，字段结构对不上，只在 decisions.json 的说明里报条数，不当成决策导出。' : ''),
+    '- 学生端的编辑与活动记录同样只读：一次批量粘贴记为一条编辑，不据此推断文本由谁独立创作。',
+    '- 逐文件条数走两条独立路径：manifest.json 的 records_in_file 从已生成正文重算，records_expected_by_ui 来自界面筛选计数；两者不一致时页面上标红，本包不会自称已核对。');
+  return L.join(NL) + NL;
+}
+
+function scopeText () {
+  const f = db.filters;
+  return ['方案 ' + (f.plan || '不限'), '班级 ' + (f.classes.length ? short(f.classes.join('、'), 22) : '不限'),
+    '任务 ' + (f.tasks.length ? short(f.tasks.join('、'), 22) : '不限'), '轮次 ' + (f.round || '不限'),
+    '快照 ' + (f.snap || '不限'), '时间 ' + (f.from || '…') + '→' + (f.to || '…')].join('｜');
+}
+/* 学生端只在界面上算「当场／补记」，这里读原始存储，按同样的规则重算一次 */
+function decTimingOf (d) {
+  if (!d.event_at) return 'uncollect：学生没有填事件时间，只有本机记录时间';
+  const ev = new Date(d.event_at).getTime();
+  if (isNaN(ev)) return '事件时间无法解析：' + d.event_at;
+  const gap = ((d.at || 0) - ev) / 86400000;
+  if (gap < 0) return '事件时间晚于记录时间，请核对';
+  return gap <= 1 ? '当场记录' : '补记（距事件约 ' + Math.round(gap) + ' 天）';
+}
+function pkgBuild () {
+  ref = readRef();
+  const sc = {}; CARDS.forEach(n => sc[n] = scope(n));
+  const snapSc = refScope(ref.snaps, s => [s.code, s.round, s.lesson, s.ver, s.unit, s.by, s.members.join(' ')].join(' '), s => s.at, null, true);
+  const decSc = refScope(ref.decisions, d => JSON.stringify(d), d => d.at || d.time || 0, (d, i) => 'DEC-' + String(i + 1).padStart(2, '0'), true);
+  const ansSc = refScope(ref.answers, a => [a.msr, a.msr_name, a.task, a.state, a.answer, a.by].join(' '), a => a.updated_at || a.at || 0, (a, i) => 'ANS-' + String(i + 1).padStart(2, '0'), true);
+  const editSc = refScope(ref.edits, e => e.text + ' ' + e.by, e => e.at, (e, i) => (e.from || '学生窗口') + ' 记录' + String(i + 1).padStart(3, '0'), true);
+  const matSc = refScope(ref.mats, m => [m.id, m.kind, m.name, m.url, m.loc, m.by].join(' '), m => m.at, (m, i) => m.id || ('材料' + (i + 1)), true);
+  const grantSc = refScope(db.grants, g => [g.scaf, g.ver, g.to, g.by].join(' '), g => g.at, (g, i) => g.id || ('发放' + (i + 1)), false);
+  const evSc = refScope(db.events, e => [EVENTS[e.kind] || e.kind, e.who, e.scaf, e.ver, e.task].join(' '), e => e.at, (e, i) => e.id, false);
+
+  const files = [];
+  // expect 是界面侧算出的条数，records 从生成好的正文重算，两条路径不一致时页面上标红
+  const add = e => { const x = Object.assign({ status: 'ok', text: '', note: '', status_note: '', expect: null, shape: 'doc' }, e);
+    if (x.status !== 'ok') x.expect = null; files.push(x); };
+
+  add({ f: 'README.md', note: '字段含义、状态代码、时间规则、对象关联、采集缺口与筛选规则' });
+  add({ f: 'manifest.json', note: '数据结构版本、导出时间、选取范围、实际文件列表与逐文件记录数' });
+  add({ f: 'codebook.csv', text: codebookOf(), shape: 'rows', expect: codebookRows().length,
+    note: '每个对象每个字段的代码、标签、控件、可选值与空值原因' });
+  add({ f: 'participants.csv', status: sc.person.all ? 'ok' : 'notcollected', shape: 'long', expect: sc.person.kept.length,
+    text: sc.person.all ? csvLong('person', sc.person.kept) : '',
+    note: '参与者与背景（匿名编号）', status_note: sc.person.all ? '' : '未采集：还没有添加参与者记录' });
+  add({ f: 'group_memberships.csv', status: (sc.group.all + sc.memberlog.all) ? 'ok' : 'notcollected', shape: 'rows',
+    expect: sc.group.kept.length + sc.memberlog.kept.length,
+    text: (sc.group.all + sc.memberlog.all) ? csv(['记录类型', '对象编号', '组号或调整', '成员或涉及的人', '生效时间', '当前名单是否适用／调整动作', '说明'],
+      sc.group.kept.map(r => { const n = namesOf(field(r.id, 'who')).length;
+        return ['当前名单', r.id, field(r.id, 'no'),
+          n ? n + ' 人（成员姓名不进包）' : '未登记成员', field(r.id, 'since'),
+          field(r.id, 'size_ok') + '｜领域：' + (field(r.id, 'domain') || NODATA), ''];
+      }).concat(sc.memberlog.kept.map(r => ['成员调整', r.id, field(r.id, 'no'), '涉及的人姓名不进包',
+        field(r.id, 'since'), field(r.id, 'act'), field(r.id, 'note')]))
+    ) : '',
+    note: '小组人数、内容领域与历史调整（只追加，不回头覆盖）；成员姓名与身份对应表都不进本包', status_note: sc.group.all + sc.memberlog.all ? '' : '未采集：还没有小组或成员调整记录' });
+  add({ f: 'conditions.csv', status: !db.condOn ? 'notenabled' : (sc.cond.all ? 'ok' : 'notcollected'), shape: 'long', expect: sc.cond.kept.length,
+    text: db.condOn ? csvLong('cond', sc.cond.kept) : '',
+    note: '比较条件、分配单位与分配依据', status_note: db.condOn ? '' : '未启用：「条件配置」页没有启用比较条件，本包不生成假条件' });
+  const keptScaf = sc.scaf.kept.map(r => r.id);
+  const openOf = id => grantSc.kept.map(x => x.raw).filter(g => g.scaf === id);
+  const assignExpect = keptScaf.reduce((n, id) => n + (openOf(id).length || 1), 0);
+  const assignRows = keptScaf.map(id => { const gs = openOf(id);
+    if (!gs.length) return [[id, field(id, 'ver'), 'none', field(id, 'frame'), field(id, 'task'), field(id, 'to'), field(id, 'plan_at'), 'not_happn', '', '', 'uncollect']];
+    return gs.map(g => [id, g.ver, g.id, field(id, 'frame'), field(id, 'task'), g.to, field(id, 'plan_at'), fmtTime(g.at), g.by,
+      field(id, 'body') !== g.body ? 'changed_after_open' : 'same', 'uncollect']); }).reduce((a, r) => a.concat(r), []);
+  add({ f: 'scaffold_assignments.csv', status: sc.scaf.all ? 'ok' : 'notcollected', shape: 'rows', expect: assignExpect,
+    text: sc.scaf.all ? csv(['支架编号', '内容版本', '发放记录号', '框架类型', '适用任务', '发放对象', '计划开放时间', '实际开放时间', '操作者', '开放时内容与现在是否一致', '服务器记录时间'], assignRows) : '',
+    note: '支架内容与每一次实际开放（一次开放一行）', status_note: sc.scaf.all ? '' : '未采集：还没有添加支架' });
+  add({ f: 'scaffold_events.csv', status: evSc.all ? 'ok' : 'notcollected', shape: 'rows', expect: evSc.kept.length,
+    text: evSc.all ? csv(['事件编号', '事件类型', '谁', '支架与版本', '任务', '本机记录时间', '服务器记录时间', '来源类型', '是否演示'],
+      evSc.kept.map(x => { const e = x.raw; return [e.id, EVENTS[e.kind] || e.kind, e.who || 'not_happn', (e.scaf || '') + ' ' + (e.ver || ''),
+        e.task || '', fmtTime(e.at), 'uncollect', e.src || '', e.demo ? 'yes' : 'no']; })) : '',
+    note: '四类支架交互事件，分开保存', status_note: evSc.all ? '' : '未采集：还没有使用记录；学生端的打开与展开要接服务端日志' });
+  add({ f: 'artifact_snapshots.json', status: snapSc.all ? 'ok' : 'notcollected', shape: 'array', expect: snapSc.kept.length,
+    text: snapSc.all ? jsonObjs(snapSc.kept.map(r => { const s = r.raw; return { snapshot_code: s.code, taken_by: s.by,
+        taken_at_local: new Date(s.at).toISOString(), from_window: s.from, round: s.round || 'uncollect',
+        lesson_version: s.lesson || 'uncollect', platform_version: s.ver || 'uncollect', unit: s.unit || 'uncollect',
+        members: s.members, artifact_versions: 'uncollect', parent_version: 'uncollect', material_refs: s.mats,
+        missing_reason: 'uncollect：这里只读得到快照标题层信息，作品版本与父版本要接服务端' }; })) : '',
+    note: '作品快照（读自学生两个窗口，只读）', status_note: snapSc.all ? '' : '未采集：两个学生窗口还没有保存展示版快照' });
+  add({ f: 'decisions.json', status: decSc.all ? 'ok' : 'notcollected', shape: 'array', expect: decSc.kept.length,
+    text: decSc.all ? jsonObjs(decSc.kept.map(r => { const d = r.raw; return {
+        record_code: r.key, student_side_code: d.id, from_window: d.from, task_label: d.win || 'uncollect',
+        recorded_to: d.target_label || 'uncollect', recorded_to_key: d.target || 'uncollect',
+        problem: d.problem || MISSING.blank, decision_made: d.decision || MISSING.blank,
+        evidence: d.reason || MISSING.blank,
+        empty_field_reason: (d.problem && d.decision && d.reason) ? '' : 'blank：问题、决定、依据三项里有学生没写的，空值原样保留',
+        evidence_sources: d.sources || [], participants: d.participants || [],
+        alternates: d.alternates || '', check_plan: d.check_plan || '',
+        event_time_local: d.event_at || 'uncollect', timing: decTimingOf(d),
+        recorded_at_local: d.at ? new Date(d.at).toISOString() : 'uncollect',
+        recorded_by: d.by || '', source_type: d.src || '学生填写',
+        server_time: null, server_time_reason: 'uncollect：未接入服务端',
+        identity_note: (d.src && d.src !== '学生填写') ? '这条由学生窗口的示例数据产生，不是学生真实填写' : '学生姓名是本机自报，未接入登录',
+        ai_generated: false }; })) : '',
+    note: '关键决定记录（读自学生两个窗口，只读不回写）' + (ref.legacy ? '；另有 ' + ref.legacy + ' 条早期版本遗留记录不进本文件' : ''),
+    status_note: decSc.all ? '' : '未采集：两个学生窗口的「记录这次决定」入口里还没有内容（入口已实现，这里读的是学生本机存储）' });
+  add({ f: 'collaboration_events.json', status: editSc.all ? 'ok' : 'notcollected', shape: 'array', expect: editSc.kept.length,
+    text: editSc.all ? jsonObjs(editSc.kept.map(r => ({ event: r.raw.text, by: r.raw.by, at_local: new Date(r.raw.at).toISOString(),
+      server_time: null, server_time_reason: 'uncollect', from_window: r.raw.from,
+      note: '批量粘贴记为一次编辑，不据此推断文本由谁独立创作' }))) : '',
+    note: '编辑与讨论记录（读自学生两个窗口，本机时间）', status_note: editSc.all ? '' : '未采集：两个学生窗口还没有活动记录' });
+  add({ f: 'individual_assessments.json', status: (sc.msr.all + sc.mres.all + ansSc.all) ? 'ok' : 'notcollected', shape: 'keys',
+    expect: sc.msr.kept.length + sc.mres.kept.length + ansSc.kept.length,
+    text: (sc.msr.all + sc.mres.all + ansSc.all) ? jsonObjs({
+      arrays_explained: 'measurements＝教师登记的测量定义；answers＝教师在研究管理里逐人登记的结果；student_answers＝学生在自己窗口的「个人任务」里写的原文，来源类型＝学生填写。三份各存各的，不合并、不互相覆盖，两侧用测量编号关联。',
+      measurements: sc.msr.kept.map(r => fieldsOf('msr', r.id)),
+      answers: sc.mres.kept.map(r => fieldsOf('mres', r.id)),
+      student_answers: ansSc.kept.map(r => { const a = r.raw;
+        const known = cardsOf('msr').includes(a.msr);
+        const title = known ? titleOf('msr', a.msr) : '';
+        const same = sc.mres.kept.filter(x => title && field(x.id, 'msr') === title);
+        return { record_code: r.key, student_side_code: a.id, measurement_code: a.msr || 'uncollect',
+          measurement_current_title: title || 'uncollect：这个测量编号在当前测量列表里找不到，可能测量改过名或已删除',
+          measurement_name_at_record: a.msr_name || 'uncollect',
+          measurement_name_check: !title || !a.msr_name ? 'uncollect：两侧名称不全，判不出'
+            : title.indexOf(a.msr_name) >= 0 ? '与当前测量名称一致' : '教师端测量名称与作答时不同，按原文保留，要人工核对',
+          task_label: a.task || 'uncollect',
+          from_window: a.from, self_reported_name: a.by || '',
+          identity_note: '学生姓名是本机自报，未接入登录，与匿名编号的对应表不随本包',
+          answer: a.answer || MISSING.blank, answer_missing_reason: a.answer ? '' : 'blank',
+          student_state: a.state || (a.answer ? '写下内容但没选提交状态' : '未提交'),
+          state_note: '未交、技术中断与有效作答分开记，不折算成分数；学生端选项与教师端「实际完成／退出」不是一套词，不自动对齐',
+          submitted_at_local: a.sent_at ? new Date(a.sent_at).toISOString() : 'uncollect：没有标记过提交',
+          first_saved_at_local: a.at ? new Date(a.at).toISOString() : 'uncollect',
+          last_saved_at_local: a.updated_at ? new Date(a.updated_at).toISOString() : 'uncollect',
+          worked_alone_self_report: a.solo_self || '未约定', extra_note: a.note || '',
+          teacher_records_same_measurement: same.length
+            ? same.map(x => x.id + '（' + (field(x.id, 'state') || '状态未选') + '）').join('、')
+            : title ? '无：按当前测量标题没对上教师登记的行，改过名时要人工核对'
+              : 'uncollect：学生带的测量编号在本窗口测量列表里找不到，两侧对不上，先人工核对',
+          score: '本文件不由学生自报分数', source_type: a.src || '学生填写',
+          server_time: null, server_time_reason: 'uncollect：未接入服务端',
+          snapshot_note: '个人作答属于个人，不随展示版快照冻结' }; }) }) : '',
+    note: '个人测量定义、教师登记结果与学生自填作答（三份分开；状态与分数分开，未作答不记零分）',
+    status_note: sc.msr.all + sc.mres.all + ansSc.all ? '' : '未采集：还没有测量、教师登记结果或学生自填作答' });
+  add({ f: 'research_ratings.csv', status: sc.review.all ? 'ok' : 'notcollected', shape: 'long', expect: sc.review.kept.length,
+    text: sc.review.all ? csvLong('review', sc.review.kept) : '',
+    note: '作品研究评审（按框架分条，不并入课程成绩）', status_note: sc.review.all ? '' : '未采集：还没有评审记录' });
+  const stops = sc.mres.kept.filter(r => field(r.id, 'state') === '技术中断');
+  add({ f: 'implementation_records.json', status: (sc.extra.all + sc.mres.all) ? 'ok' : 'notcollected', shape: 'keys',
+    expect: sc.extra.kept.length + stops.length,
+    text: (sc.extra.all + sc.mres.all) ? jsonObjs({ records: sc.extra.kept.map(r => Object.assign({ record_type: '额外接触' }, fieldsOf('extra', r.id)))
+        .concat(stops.map(r => Object.assign({ record_type: '技术中断' }, fieldsOf('mres', r.id)))),
+      not_recorded: '体验者条件、实际时长与帮助程度尚未在原型里设字段，标为 uncollect，不用空列凑数' }) : '',
+    note: '实施条件与过程记录（额外接触、技术中断等）', status_note: sc.extra.all + sc.mres.all ? '' : '未采集：没有额外接触与作答记录' });
+  add({ f: 'ai_summary_records.json', status: 'notenabled',
+    note: 'AI 整理的输入引用、整理要求、模型信息、输出版本与核对记录',
+    status_note: '未启用：没有 AI 整理对象的登记入口，不生成假记录（需要输入引用、模型信息、输出版本、核对记录四类字段）' });
+  add({ f: 'materials_index.csv', status: matSc.all ? 'ok' : 'notcollected', shape: 'rows', expect: matSc.kept.length,
+    text: matSc.all ? csv(['材料编号', '类型', '名称或链接', '位置说明', '文本是否已提取', '来源窗口', '添加人', '添加时间', '随包情况'],
+      matSc.kept.map(r => { const m = r.raw; return [m.id, m.kind, m.url || m.name, m.loc || '', m.extracted ? 'yes' : 'no',
+        m.from, m.by, m.at ? fmtTime(m.at) : '', m.extracted ? 'materials/（本原型不落文件本体）' : 'not_included：只登记了位置与读取限制']; })) : '',
+    note: '材料索引：外部资料只记位置与读取限制', status_note: matSc.all ? '' : '未采集：两个学生窗口还没有登记材料' });
+  add({ f: 'materials/', status: 'notcollected', note: '随包文本与附件',
+    status_note: '未采集：没有文件目录可写；文本材料要在真实平台按 materials_index.csv 的编号落盘' });
+
+  const counted = files.filter(e => e.f !== 'manifest.json').map(e => Object.assign(e, { records: realCount(e) }));
+  const mismatch = counted.filter(e => e.expect != null && e.records !== e.expect).map(e => e.f);
+  const allRows = CARDS.reduce((a, n) => a.concat(sc[n].rows), [])
+    .concat(snapSc.rows, decSc.rows, ansSc.rows, editSc.rows, matSc.rows, grantSc.rows, evSc.rows);
+  const revUsed = allRows.filter(r => r.reviewed);
+  const revPending = allRows.filter(r => r.s === 'review' && r.leaks && r.leaks.length);
+  files[0].text = readmeOf(files, revUsed, revPending);   // README 要列缺口与复核标记，得先算好其他文件的状态
+  files[1].text = jsonObjs({ schema: PKG_SCHEMA, exported_at: new Date(now()).toISOString(),
+    exported_at_local: fmtTime(now()), exported_by_role: ME, identity_note: '身份切换不是登录，本机没有权限判断',
+    source_windows: { workbench: ref.hasWb, lesson_design: ref.hasLd, read: ref.from, group: ref.name },
+    scope: db.filters, scope_rule: '命中纳入／提到别的值排除／缺该维度进待复核',
+    files: counted.map(e => ({ file: e.f, status: e.status, records_in_file: e.records, records_expected_by_ui: e.expect,
+      reconciles: e.expect == null ? 'not_applicable' : (e.records === e.expect ? 'yes' : 'no'), note: e.note, status_note: e.status_note })),
+    manual_review: { rule: '复核标记只决定这条记录进不进这一批，不改写原文；维度判不出来的条目复核后仍留在待复核',
+      marked: revUsed.map(r => ({ record_key: r.key, judgement: r.s, reviewed_by: r.reviewed.by,
+        reviewed_at: fmtTime(r.reviewed.at), leaks: r.leaks })),
+      still_waiting_for_review: revPending.length },
+    excluded_from_package: ['身份对应表', '账号凭据', '未授权的原始材料与附件本体'],
+    reconciliation_note: 'records_in_file 由已生成正文重算，records_expected_by_ui 来自筛选计数，两条路径分开，不一致时页面标红' });
+
+  const groups = CARDS.map(n => [CFG[n].word, sc[n]]).concat([
+    ['作品快照', snapSc], ['关键决策', decSc], ['学生个人作答', ansSc], ['编辑与讨论', editSc], ['材料', matSc], ['支架开放', grantSc], ['使用事件', evSc]]);
+  const detail = [];
+  groups.forEach(([label, x]) => x.rows.forEach(r => detail.push({ grp: label, key: r.key, s: r.s, why: r.why, leaks: r.leaks,
+    reviewed: r.reviewed, title: r.id ? titleOf(r.name, r.id) : '' })));
+  return { files, groups, detail, sc, snapSc, decSc, ansSc, editSc, matSc, grantSc, evSc,
+    revMarked: revUsed.length, revWaiting: revPending.length,
+    counts: counted.reduce((n, e) => n + (e.records || 0), 0), mismatch,
+    kept: groups.reduce((n, [, x]) => n + x.kept.length, 0), out: groups.reduce((n, [, x]) => n + x.out.length, 0),
+    review: groups.reduce((n, [, x]) => n + x.review.length, 0), all: groups.reduce((n, [, x]) => n + x.all, 0) };
+}
+/* 记录数从生成的文本里重算，避免清单与文件各说一套 */
+function realCount (e) {
+  const t = e.text || ''; if (!t) return 0;
+  if (e.shape === 'rows' || e.shape === 'long') {
+    const body = t.replace(/^\ufeff/, '').split('\n').filter(x => x.length).slice(1);
+    if (e.shape === 'long') return uniq(body.map(x => x.split(',')[0])).length;   // 长表一行是一个字段，按对象编号去重
+    return body.length;
+  }
+  try { const o = JSON.parse(t);
+    if (Array.isArray(o)) return o.length;
+    return Object.keys(o).reduce((n, k) => n + (Array.isArray(o[k]) ? o[k].length : 0), 0);
+  } catch (err) { return 0; }
+}
+
+function grantDemo (id, to) {
+  const g = { id: 'V' + (++db.seq.V), at: now(), scaf: id, ver: field(id, 'ver') || 'V1', to: to || field(id, 'to') || NODATA,
+    by: ME, body: field(id, 'body'), src: 'system' };
+  db.grants.push(g);
+  db.events.push({ id: 'E' + (++db.seq.E), at: g.at, kind: 'grant', who: g.to, scaf: id, ver: g.ver, task: field(id, 'task'), src: g.src });
+  log('实际开放 ' + id + ' ' + g.ver + ' 给 ' + g.to); save(); render();
+}
+
+/* ---------- 渲染 ---------- */
+function view () {
+  return { plan: planView, cond: condView, scaf: scafView, use: useView, who: whoView,
+    measure: measureView, review: reviewView, export: exportView }[ui.page]();
+}
+let gatePass = false;
+function gateView () {
+  const err = ui.gateErr || '';
+  const bar = err ? `<p class="err on" role="alert">${esc(err)}</p>` : '';
+  if (!passState()) return `<div class="gate"><h1>首次使用，请设置管理密码</h1>${bar}
+    <p class="fld">管理密码</p><input class="pw" id="p1" type="password" autocomplete="off">
+    <p class="fld">再输入一次</p><input class="pw" id="p2" type="password" autocomplete="off">
+    <button class="go" data-act="set-pass">保存管理密码</button></div>`;
+  return `<div class="gate"><h1>请输入管理密码</h1>${bar}
+    <input class="pw" id="p1" type="password" autocomplete="off">
+    <button class="go" data-act="check-pass">进入研究管理</button></div>`;
+}
+
+function render () {
+  if (!gatePass) {
+    document.getElementById('side').innerHTML = '';
+    document.getElementById('app').innerHTML = gateView();
+    return;
+  }
+  ref = readRef();                       // 两个学生窗口是只读来源，每次渲染重读，避免停在旧值
+  document.getElementById('side').className = 'side' + (ui.side ? ' mini' : '');
+  document.getElementById('side').innerHTML = sidebar();
+  document.getElementById('app').innerHTML = view() + stashCard();
+  document.querySelectorAll('details[data-card]').forEach(d => { d.open = !!ui.open[d.dataset.card]; });
+  setSave('ok');
+  paintPresence();
+}
+function helpView () {
+  return '<h2>研究记录说明</h2><div class="bd">' +
+    '<p>八个页面分别记研究安排、比较条件、支架发放与使用事件、班级与组队、个人测量、作品评审与导出批次；' +
+    '导出先按范围筛，再逐条预览纳入／排除／待复核，过匿名化检查后出研究包，原文不改写。</p>' +
+    '<p>空值分六类：' + Object.values(MISSING).join('、') + '。缺失照常导出并保留原因。</p>' +
+    '<p>每条取值都带来源：' + Object.values(SOURCE).join('、') + '。从学生两个窗口读来的记为「学生填写」，本窗口只读不回写。</p>' +
+    '<p><button class="btn ghost" data-act="demo-clear">清空本机内容</button></p>' +
+    '</div><div class="ft"><button class="btn" data-act="close-modal">关闭</button></div>';
+}
+function exportModal (fmt) {
+  const text = exportText(fmt);
+  return '<h2>本机工作记录' + (fmt === 'json' ? '（JSON）' : '（Markdown）') + '</h2><div class="bd">' +
+    '<div class="note" style="margin:0 0 10px">内容与界面同源：' + text.length + ' 字。这里是不筛选的原始记录快照，' +
+    '按范围筛选、匿名化检查与研究包结构在「研究导出」页面里生成。</div>' +
+    '<pre>' + esc(text) + '</pre></div>' +
+    '<div class="ft"><button class="btn" data-act="copy-export" data-fmt="' + fmt + '">复制</button>' +
+    '<button class="btn" data-act="dl-export" data-fmt="' + fmt + '">下载</button>' +
+    '<button class="btn" data-act="export-toggle">切换' + (fmt === 'json' ? ' Markdown' : ' JSON') + '</button>' +
+    '<button class="btn" data-act="close-modal">关闭</button></div>';
+}
+function toast (t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
+
+/* ---------- 事件 ---------- */
+let fmt = 'md';
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-page],[data-act],[data-add],[data-del],[data-copy],[data-open],[data-newver],[data-undo],[data-set],summary,button,a');
+  if (!el) return;
+  if (el.tagName === 'A' && el.href) return;              // 外部链接照常打开
+  if (el.tagName === 'SUMMARY') { const id = el.parentElement.dataset.card; if (id) { ui.open[id] = !el.parentElement.open; } return; }
+  const d = el.dataset;
+  if (d.page) { ui.page = d.page; render(); window.scrollTo(0, 0); return; }
+  if (d.add) { const id = addCard(d.add); ui.open[id] = true; render(); toast('已添加 ' + id); return; }
+  if (d.del) { delCard(d.del); return; }
+  if (d.undo) { undoDel(d.undo); return; }
+  if (d.copy) { supersede(d.copy); return; }
+  if (d.open) { grantDemo(d.open); toast('已记实际开放时间与当时版本'); return; }
+  if (d.newver) { const nid = supersede(d.newver); if (nid) grantDemo(nid); return; }
+  if (d.set) { const box = el; setOf(d.set.split('.').slice(0, -1).join('.'), d.set.split('.').pop(), d.opt, box.checked); render(); return; }
+  if (d.openAll) { const ids = cardsOf(d.openAll); const all = ids.every(i => ui.open[i]); ids.forEach(i => ui.open[i] = !all); render(); return; }
+  switch (d.act) {
+    case 'side': ui.side = !ui.side; render(); break;
+    case 'help': ui.modal = 'help'; paintModal(); break;
+    case 'export': ui.page = 'export'; render(); window.scrollTo(0, 0); break;
+    case 'notes': ui.modal = 'export'; paintModal(); break;
+    case 'flt-reset': db.filters = blankDb().filters; ui.expShow = 'need'; save(); render(); toast('筛选已清除，本机记录没有改动'); break;
+    case 'exp-show': ui.expShow = ui.expShow === 'all' ? 'need' : 'all'; render(); break;
+    case 'rev-ok': { const k = d.rk; if (!k) break;
+      db.reviewed[k] = { by: ME, at: now() }; log('人工复核通过：' + k);
+      const row = (pkgCache = pkgBuild()).detail.filter(x => x.key === k)[0] || {};
+      save(); render();
+      toast(row.s === 'in' ? '已标记复核：' + k + ' 进这一批，原文没有改动'
+        : '已标记复核，但这条仍判为' + (row.s === 'out' ? '排除（范围不符）' : '待复核：' + (row.why[0] || '原因见上'))); break; }
+    case 'rev-undo': { const k = d.rk; if (!k) break;
+      delete db.reviewed[k]; log('撤销人工复核：' + k); pkgCache = pkgBuild(); save(); render();
+      toast('已撤销复核标记：' + k + ' 回到待复核'); break; }
+    case 'pkg-preview': pkgCache = pkgCache || pkgBuild(); ui.pkgN = +d.n; ui.modal = 'pkg'; paintModal(); break;
+    case 'pkg-copy': { const e2 = (pkgCache || pkgBuild()).files[+d.n] || {}, t = e2.text || '';
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+        .then(() => toast('已复制 ' + e2.f + '，' + t.length + ' 字')).catch(() => toast('浏览器未授权剪贴板，请在预览框里全选复制')); break; }
+    case 'pkg-dl': { const e2 = (pkgCache || pkgBuild()).files[+d.n] || {}, a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([e2.text || ''], { type: 'text/plain;charset=utf-8' }));
+      a.download = e2.f || 'research-package.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      log('下载研究包文件 ' + e2.f); save(); toast('已下载 ' + e2.f); break; }
+    case 'pkg-log': { const pk = pkgCache || pkgBuild();
+      const code = 'EXP-' + fmtDay(now()).replace(/-/g, '') + '-' + String((db.expSeq || 0) + 1).padStart(2, '0');
+      db.expSeq = (db.expSeq || 0) + 1;
+      db.exports.unshift({ code, at: now(), by: ME, schema: PKG_SCHEMA, scope: scopeText(), files: pk.files.length,
+        records: pk.counts, review: pk.review, out: pk.out, reviewed: pk.revMarked, mismatch: pk.mismatch.join('、') });
+      db.exports = db.exports.slice(0, 60);
+      log('记录导出批次 ' + code + '：' + pk.files.length + ' 个文件、' + pk.counts + ' 条记录、待复核 ' + pk.review +
+        '、复核纳入 ' + pk.revMarked);
+      save(); render(); toast('已记批次 ' + code + '，只存清单与计数，不存正文'); break; }
+    case 'export-toggle': fmt = fmt === 'md' ? 'json' : 'md'; paintModal(); break;
+    case 'close-modal': ui.modal = null; paintModal(); break;
+    case 'copy-export': { const text = exportText(fmt);
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+        .then(() => toast('已复制 ' + text.length + ' 字')).catch(() => toast('浏览器未授权剪贴板，请在预览框里全选复制')); break; }
+    case 'dl-export': { const text = exportText(fmt), a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+      a.download = '研究管理记录-' + fmtDay(now()) + (fmt === 'json' ? '.json' : '.md'); a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('已下载'); break; }
+    case 'set-pass': { const p1 = document.getElementById('p1'), p2 = document.getElementById('p2');
+      const v1 = p1 ? p1.value : '', v2 = p2 ? p2.value : '';
+      if (v1.length < 4) { ui.gateErr = '管理密码至少 4 位'; render(); return; }
+      if (v1 !== v2) { ui.gateErr = '两次输入不一致'; render(); return; }
+      setPass(v1); ui.gateErr = ''; gatePass = true; render(); toast('管理密码已设置'); break; }
+    case 'check-pass': { const p1 = document.getElementById('p1');
+      const v = p1 ? p1.value : '';
+      if (!checkPass(v)) { ui.gateErr = '密码错误'; render(); return; }
+      ui.gateErr = ''; gatePass = true; render(); break; }
+    case 'demo-clear': if (confirm('清空本机研究管理记录？平台开发与教学设计两个窗口的内容不受影响。')) {
+        localStorage.removeItem(DB_KEY); db = blankDb(); ui = { page: 'plan', open: {}, modal: null, side: ui.side };
+        migrateRoster(); save(true);
+        render(); toast('已清空，回到空状态；确认名单里的班级与 8 组组队重新登记'); } break;
+    case 'add-class': { const el = document.getElementById('newclass'), name = el && el.value.trim();
+        if (!name) { toast('先在输入框里写班级名称'); break; }
+        if (classesList().includes(name)) { toast(name + ' 已经登记过'); break; }
+        db.classes.push({ name }); log('登记班级 ' + name); save(); render(); break; }
+  }
+});
+document.addEventListener('input', e => {
+  const el = e.target.closest('[data-k]'); if (!el) return;
+  put(el.dataset.k, el.value);
+});
+document.addEventListener('change', e => {
+  const box = e.target.closest('#condon');
+  if (box) { db.condOn = box.checked; log(box.checked ? '启用比较条件' : '暂不启用比较条件'); save(); render(); return; }
+  const who = e.target.closest('#me');
+  if (who) { ME = who.value; localStorage.setItem(ROLE_KEY, ME); log('身份切到 ' + ME); save(); render(); return; }
+  const flt = e.target.closest('[data-f]');
+  if (flt) { db.filters[flt.dataset.f] = flt.value; save(); render(); return; }
+  const fs = e.target.closest('[data-fset]');
+  if (fs) { const k = fs.dataset.fset, cur = db.filters[k] || [], o = fs.dataset.opt, i = cur.indexOf(o);
+    if (fs.checked && i < 0) cur.push(o); if (!fs.checked && i >= 0) cur.splice(i, 1);
+    db.filters[k] = cur; save(); render(); return; }
+  const el = e.target.closest('[data-k]'); if (!el) return;
+  if (el.tagName === 'SELECT') put(el.dataset.k, el.value);
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const el = e.target.closest('.gate input.pw'); if (!el) return;
+  const btn = document.querySelector('.gate .go'); if (btn) btn.click();
+});
+function pkgModal () {
+  const e = (pkgCache || (pkgCache = pkgBuild())).files[ui.pkgN] || {};
+  return '<h2>' + esc(e.f || '研究包文件') + '</h2><div class="bd">' +
+    '<div class="note" style="margin:0 0 10px">状态：' + esc((PKG_STATUS[e.status] || ['未定'])[0]) +
+    '　正文条数：' + (e.records == null ? '—' : e.records) + '　界面计数：' + (e.expect == null ? '—' : e.expect) +
+    '　' + esc(e.status === 'ok' ? e.note : e.status_note) + '　共 ' + (e.text || '').length + ' 字</div>' +
+    '<pre>' + esc(e.text || '') + '</pre></div>' +
+    '<div class="ft"><button class="btn" data-act="pkg-copy" data-n="' + ui.pkgN + '">复制</button>' +
+    '<button class="btn" data-act="pkg-dl" data-n="' + ui.pkgN + '">下载</button>' +
+    '<button class="btn" data-act="close-modal">关闭</button></div>';
+}
+function paintModal () {
+  const m = document.getElementById('modal');
+  m.innerHTML = ui.modal ? '<div class="modal"><div class="box">' +
+    (ui.modal === 'help' ? helpView() : ui.modal === 'pkg' ? pkgModal() : exportModal(fmt)) + '</div></div>' : '';
+}
+/* 验收自测用的只读访问器，不参与界面渲染 */
+window.__dbg = () => { ref = readRef(); const pk = pkgBuild();
+  return { me: ME, tab: TAB, page: ui.page, rev: db._rev, cards: Object.fromEntries(CARDS.map(n => [n, cardsOf(n).length])),
+    pkg: { files: pk.files.length, records: pk.counts, kept: pk.kept, out: pk.out, review: pk.review,
+      revMarked: pk.revMarked, revWaiting: pk.revWaiting, reviewed: JSON.parse(JSON.stringify(db.reviewed || {})),
+      mismatch: pk.mismatch, status: pk.files.map(e => e.f + '=' + e.status + '/' + e.records) },
+    filters: JSON.parse(JSON.stringify(db.filters)), batches: db.exports.length,
+    seq: Object.assign({}, db.seq), condOn: !!db.condOn, classes: classesList(),
+    grants: db.grants.length, events: Object.keys(EVENTS).reduce((o, k) => (o[k] = db.events.filter(e => e.kind === k).length, o), {}),
+    demoEvents: db.events.filter(e => e.demo).length, revisions: db.revisions.length, stash: Object.keys(db.stash || {}).length,
+    missing: missingCount(), refWb: ref.hasWb, refLd: ref.hasLd, refName: ref.name,
+    decisions: ref.decisions.length, answers: ref.answers.length, legacyRef: ref.legacy, windows: ref.windows,
+    presence: freshPresence().map(p => p.by + '→' + p.page) }; };
+
+setInterval(() => { announce(); paintPresence(); }, 5000);
+window.addEventListener('focus', () => { const keep = ui; load(); Object.assign(ui, keep); render(); });
+if (!load()) { migrateRoster(); save(true); }   /* 首次打开也按确认名单登记班级与 8 组组队 */
+render(); announce();
+</script>
+</body>
+</html>
