@@ -1,12 +1,10 @@
-// Firebase 配置 - 请替换为你的项目配置
-// 获取方式：Firebase Console → 项目设置 → 常规 → 你的应用 → Firebase SDK snippet → Config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA2bZp7_NKEQjPr-Dii_Sb7ig4_93eI7N8",
+  authDomain: "kezhujiao-platform.firebaseapp.com",
+  projectId: "kezhujiao-platform",
+  storageBucket: "kezhujiao-platform.firebasestorage.app",
+  messagingSenderId: "701447538017",
+  appId: "1:701447538017:web:4755daf2d1e46f0cda3120"
 };
 
 // Firebase 初始化
